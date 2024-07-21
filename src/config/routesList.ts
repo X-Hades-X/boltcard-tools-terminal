@@ -1,1 +1,1 @@
-export const routesList = ["/", "qr-scanner", "invoice"] as const;
+export const routesList = ["/", "qr-scanner", "invoice", "bridge"] as const;

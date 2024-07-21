@@ -34,4 +34,8 @@ export const PinViewStyles = StyleSheet.create({
       borderColor: "#FFF",
       backgroundColor: "transparent"
     },
+    transparent: {
+      borderWidth: 0,
+      backgroundColor: "transparent"
+    },
 });

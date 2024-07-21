@@ -29,10 +29,12 @@
   "screens": {
     "home": {
       "intro": "This app is a simple utility tool to help you paying Lightning invoices on devices/platforms that do not directly support BoltCards, such as websites, custom machines, and others.",
+      "bridgeIntro": "You can also tap your card now to enter \"Bridge Mode\" and send or receive funds from one Bolt Card to another.",
       "scanInvoice": "Scan invoice",
       "nfcNotSupported": "NFC not supported",
       "moreAboutBoltCard": "More about BoltCard",
       "builtBy": "Built by",
+      "bridgeMode": "Bridge Mode",
       "foundInvoiceClipboard": "Tap to read invoice from your clipboard"
     },
     "invoice": {
@@ -49,6 +51,15 @@
       "amountToPay": "Amount to pay",
       "scheduleForNextBatch": "Schedule for next batch",
       "startScanning": "Start scanning",
+      "payingInvoice": "Paying invoice",
+      "paid": "Paid",
+      "returnToHome": "Return to Home"
+    },
+    "bridge": {
+      "title": "Enter amount (SATs)",
+      "send": "Send",
+      "receive": "Receive",
+      "tapYourBoltCard": "Tap your Bolt Card to receive the amount.",
       "payingInvoice": "Paying invoice",
       "paid": "Paid",
       "returnToHome": "Return to Home"

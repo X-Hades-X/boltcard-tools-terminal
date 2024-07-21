@@ -5,6 +5,7 @@ import { NFC, isApiError } from "@utils";
 import { useToast } from "react-native-toast-notifications";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
+import { useInvoiceHandler } from "@hooks";
 
 const { isWeb, isNative, isIos, getIsNfcSupported } = platform;
 
@@ -19,6 +20,27 @@ export const useNfc = () => {
   const [isNfcActionSuccess, setIsNfcActionSuccess] = useState(false);
   const [isPinRequired, setIsPinRequired] = useState(false);
   const [isPinConfirmed, setIsPinConfirmed] = useState(false);
+  const { invoiceHandler } = useInvoiceHandler();
+
+  const lightingPrefix = "lightning:";
+  const lnurlwPrefix = "lnurlw://";
+  const lnurlEncodingPrefix = "lnurl";
+
+  const [lnurlWData, setLnurlWData] = useState<{
+     tag: "withdrawRequest";
+     callback: string;
+     k1: string;
+     pinLimit?: number;
+     payLink?: string;
+   }>();
+
+  const [lnurlPData, setLnurlPData] = useState<{
+     tag?: string;
+     callback?: string;
+     minSendable?: number;
+     maxSendable?: number;
+     commentAllowed?: number;
+   }>();
 
   const [ pinResolver, setPinResolver ] = useState<{
     resolve: (v: string) => void;
@@ -73,6 +95,117 @@ export const useNfc = () => {
     }
   }, []);
 
+  const readingNfcLoopWithdraw = useCallback(
+    async (cb?: string | null, k1?: string | null, amount?: number | null, pinRequired?: boolean | null) => {
+        let pin = "";
+        if (pinRequired) {
+          setIsPinRequired(true);
+          pin = await getPin();
+          setIsPinConfirmed(true);
+        } else {
+          setIsPinRequired(false);
+        }
+
+        setIsNfcActionSuccess(false);
+        await NFC.stopRead();
+
+        setIsNfcScanning(true);
+        NFC.startRead(async (nfcMessage) => {
+            setIsNfcScanning(false);
+            setIsNfcLoading(true);
+
+            if (
+              !nfcMessage.toLowerCase().startsWith(lnurlwPrefix) &&
+              (nfcMessage.toLowerCase().startsWith(lightingPrefix) ||
+                nfcMessage.toLowerCase().startsWith(lnurlEncodingPrefix))
+            ) {
+              nfcMessage = nfcMessage.toLowerCase();
+            } else if (!nfcMessage.startsWith(lnurlwPrefix)) {
+              toast.show(t("errors.invalidLightningTag"), {
+                type: "error"
+              });
+
+              if (!isIos) {
+                readingNfcLoopWithdraw(cb, k1, amount, pin);
+              } else {
+                setIsNfcAvailable(false);
+              }
+
+              setIsNfcLoading(false);
+              return;
+            }
+
+            let debitCardData;
+            let error;
+            let cardData = getCardData(nfcMessage);
+            try {
+                let payLink = await requestLnurlData(cardData);
+                if(cb && amount) {
+                    if(payLink.minSendable / 1000 > amount) {
+                        error = { reason: "Amount is lower than min sendable. Can't make payRequest."}
+                    } else if(payLink.maxSendable / 1000 < amount) {
+                        error = { reason: "Amount is higher than max sendable. Can't make payRequest."}
+                    }
+
+                    if (!error) {
+                      const { data: payLinkResponseData } = await axios.get<{ pr: string }>(
+                          payLink.callback, {
+                            params: {
+                              amount: amount * 1000
+                            }
+                      });
+
+                      debitCardData = await settleInvoice(cb, k1, payLinkResponseData.pr, pin)
+                    }
+                } else {
+                    await NFC.stopRead();
+                    setIsNfcLoading(false);
+                    setIsPinConfirmed(false);
+                    setIsPinRequired(false);
+                    setIsNfcActionSuccess(true);
+                    if (isIos) {
+                      setIsNfcAvailable(false);
+                    }
+                    return;
+                }
+            } catch (e) {
+              if (isApiError(e)) {
+                error = e.response.data;
+              }
+            }
+
+            await NFC.stopRead();
+            setIsNfcLoading(false);
+            setIsPinConfirmed(false);
+            setIsPinRequired(false);
+
+            if (debitCardData?.status === "OK" && !error) {
+              setIsNfcActionSuccess(true);
+            } else {
+              if (debitCardData?.status === "ERROR" && !error) {
+                error = debitCardData;
+              }
+              toast.show(
+                typeof error?.reason === "string"
+                  ? error.reason
+                  : error?.reason.detail || t("errors.unknown"),
+                {
+                  type: "error"
+                }
+              );
+
+              if (!isIos) {
+                readingNfcLoopWithdraw(cb, amount, pin);
+              }
+            }
+
+            if (isIos) {
+              setIsNfcAvailable(false);
+              return;
+            }
+        });
+    }, [invoiceHandler, requestLnurlData, lnurlPData, settleInvoice]);
+
   const readingNfcLoop = useCallback(
     async (pr: string, amount?: number | null) => {
 
@@ -83,9 +216,6 @@ export const useNfc = () => {
       NFC.startRead(async (nfcMessage) => {
         setIsNfcScanning(false);
         setIsNfcLoading(true);
-        const lightingPrefix = "lightning:";
-        const lnurlwPrefix = "lnurlw://";
-        const lnurlEncodingPrefix = "lnurl";
 
         if (
           !nfcMessage.toLowerCase().startsWith(lnurlwPrefix) &&
@@ -108,34 +238,10 @@ export const useNfc = () => {
           return;
         }
 
-        let cardData = "";
-
-        if (nfcMessage.startsWith(lightingPrefix)) {
-          nfcMessage = nfcMessage.slice(lightingPrefix.length);
-        }
-
-        if (nfcMessage.startsWith(lnurlwPrefix)) {
-          nfcMessage = nfcMessage.replace("lnurlw", "https");
-        }
-
-        if (nfcMessage.startsWith(lnurlEncodingPrefix)) {
-          const lnurl = nfcMessage;
-
-          const { words: dataPart } = bech32.decode(lnurl, 2000);
-          const requestByteArray = bech32.fromWords(dataPart);
-          cardData = Buffer.from(requestByteArray).toString();
-        } else {
-          cardData = nfcMessage;
-        }
-
-        if (cardData.startsWith(lnurlwPrefix)) {
-          cardData = cardData.replace("lnurlw", "https");
-        }
-
         let debitCardData;
         let error;
+        let cardData = getCardData(nfcMessage);
         try {
-          if (true) {
             const { data: cardDataResponse } = await axios.get<{
               tag: "withdrawRequest";
               callback: string;
@@ -145,7 +251,6 @@ export const useNfc = () => {
 
             let pin = "";
             if (cardDataResponse.pinLimit !== undefined) {
-
               if (!amount) {
                 error = { reason: "No amount set. Can't make withdrawRequest"}
               } else {
@@ -163,72 +268,8 @@ export const useNfc = () => {
             }
 
             if (!error) {
-              const { data: callbackResponseData } = await axios.get<{
-                reason: { detail: string };
-                status: "OK" | "ERROR";
-              }>(cardDataResponse.callback, {
-                params: {
-                  k1: cardDataResponse.k1,
-                  pr,
-                  pin
-                }
-              })
-              debitCardData = callbackResponseData;
+              debitCardData = await settleInvoice(cardDataResponse.callback, cardDataResponse.k1, pr, pin)
             }
-          } else {
-            // const { data: cardRequest } = await axios.get<{ payLink?: string }>(
-            //   lnHttpsRequest
-            // );
-            // if (!cardRequest.payLink) throw getError("Invalid tag. No payLink");
-            // let finalUrl = cardRequest.payLink;
-            // if (finalUrl.startsWith("lnurlp://")) {
-            //   finalUrl = finalUrl.replace("lnurlp", "https");
-            // }
-            // const { data: finalUrlRequest } = await axios.get<{
-            //   tag?: string;
-            //   callback?: string;
-            //   minSendable?: number;
-            //   maxSendable?: number;
-            //   commentAllowed?: number;
-            // }>(finalUrl);
-            // if (finalUrlRequest.tag !== "payRequest")
-            //   throw getError("Invalid tag. tag is not payRequest");
-            // if (!finalUrlRequest.callback)
-            //   throw getError("Invalid tag. No callback");
-            // if (
-            //   !finalUrlRequest.minSendable ||
-            //   finalUrlRequest.minSendable / 1000 > amount
-            // )
-            //   throw getError("Invalid tag. minSendable undefined or too high");
-            // if (
-            //   !finalUrlRequest.maxSendable ||
-            //   finalUrlRequest.maxSendable / 1000 < amount
-            // )
-            //   throw getError("Invalid tag. maxSendable undefined or too low");
-            // const fullTitle = `${title || ""}${
-            //   description ? `- ${description}` : ""
-            // }`;
-            // const { data: callbackRequest } = await axios.get<{ pr?: string }>(
-            //   `${finalUrlRequest.callback}?amount=${(amount || 0) * 1000}${
-            //     (finalUrlRequest.commentAllowed || 0) >= fullTitle.length
-            //       ? `&comment=${fullTitle}`
-            //       : ""
-            //   }`
-            // );
-            // if (!callbackRequest.pr) throw getError("Invalid tag. No pr defined");
-            // const { data: withdrawCallbackRequest } = await axios.get<{
-            //   status?: string;
-            // }>(withdrawCallbackData.callback, {
-            //   params: {
-            //     pr: callbackRequest.pr,
-            //     k1: withdrawCallbackData.k1
-            //   }
-            // });
-            // if (withdrawCallbackRequest.status !== "OK")
-            //   throw getError("Impossible to top-up card.");
-            // setIsPaid(true);
-            // debitCardData = withdrawCallbackRequest;
-          }
         } catch (e) {
           if (isApiError(e)) {
             error = e.response.data;
@@ -236,10 +277,10 @@ export const useNfc = () => {
         }
 
         await NFC.stopRead();
-
         setIsNfcLoading(false);
         setIsPinConfirmed(false);
         setIsPinRequired(false);
+
         if (debitCardData?.status === "OK" && !error) {
           setIsNfcActionSuccess(true);
         } else {
@@ -264,10 +305,78 @@ export const useNfc = () => {
           setIsNfcAvailable(false);
           return;
         }
+
       });
     },
-    [toast, t, getPin]
+    [toast, t, getPin, settleInvoice]
   );
+
+  const getCardData = useCallback(
+      (nfcMessage: string) => {
+          let cardData = "";
+
+          if (nfcMessage.startsWith(lightingPrefix)) {
+            nfcMessage = nfcMessage.slice(lightingPrefix.length);
+          }
+
+          if (nfcMessage.startsWith(lnurlwPrefix)) {
+            nfcMessage = nfcMessage.replace("lnurlw", "https");
+          }
+
+          if (nfcMessage.startsWith(lnurlEncodingPrefix)) {
+            const lnurl = nfcMessage;
+
+            const { words: dataPart } = bech32.decode(lnurl, 2000);
+            const requestByteArray = bech32.fromWords(dataPart);
+            cardData = Buffer.from(requestByteArray).toString();
+          } else {
+            cardData = nfcMessage;
+          }
+
+          if (cardData.startsWith(lnurlwPrefix)) {
+            cardData = cardData.replace("lnurlw", "https");
+          }
+          return cardData;
+  }, []);
+
+  const settleInvoice = useCallback(
+    async (cb: string, k1: string, pr: string, pin?: string | null) => {
+      const { data: callbackResponseData } = await axios.get<{
+        reason: { detail: string };
+        status: "OK" | "ERROR";
+      }>(cb, {
+        params: {
+          k1,
+          pr,
+          pin
+        }
+      });
+      return callbackResponseData;
+  }, []);
+
+  const requestLnurlData = useCallback(
+    async (cardData: string) => {
+        const { data: cardRequest } = await axios.get<{ payLink?: string }>(
+            cardData
+        );
+        setLnurlWData(cardRequest);
+
+        if (!cardRequest.payLink) throw getError("Invalid tag. No payLink");
+        let finalUrl = cardRequest.payLink;
+        if (finalUrl.startsWith("lnurlp://")) {
+            finalUrl = finalUrl.replace("lnurlp", "https");
+        }
+        const { data: finalUrlRequest } = await axios.get<{
+            tag?: string;
+            callback?: string;
+            minSendable?: number;
+            maxSendable?: number;
+            commentAllowed?: number;
+        }>(finalUrl);
+        setLnurlPData(finalUrlRequest);
+
+        return finalUrlRequest;
+  }, []);
 
   const stopNfc = useCallback(() => {
     setIsNfcScanning(false);
@@ -291,6 +400,9 @@ export const useNfc = () => {
     setPin,
     setupNfc,
     stopNfc,
-    readingNfcLoop
+    readingNfcLoop,
+    readingNfcLoopWithdraw,
+    lnurlWData,
+    lnurlPData
   };
 };

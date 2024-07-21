@@ -6,7 +6,7 @@ import { faCamera, faXmark } from "@fortawesome/free-solid-svg-icons";
 import AnimatedLinearGradient from "react-native-animated-linear-gradient";
 import { colors } from "./gradient-config";
 import { PlaceholderPresets } from "@components/QRCamera/data";
-import { useInitialClipboard, useVersionTag } from "@hooks";
+import { useInitialClipboard, useVersionTag, useNfc } from "@hooks";
 import { platform } from "@config";
 import * as S from "./styled";
 import { useEffect, useState } from "react";
@@ -21,11 +21,43 @@ export const Home = () => {
 
   const [isNfcSupported, setIsNfcSupported] = useState(false);
 
+  const {
+    setupNfc,
+    readingNfcLoopWithdraw,
+    isNfcScanning,
+    lnurlWData,
+    lnurlPData
+  } = useNfc();
+
   useEffect(() => {
     (async () => {
       setIsNfcSupported(await getIsNfcSupported());
     })();
   }, []);
+
+  useEffect(() => {
+    if(isNfcSupported) {
+        void setupNfc();
+    }
+  }, []);
+
+  useEffect(() => {
+    if(isNfcSupported && !isNfcScanning) {
+        void readingNfcLoopWithdraw(null, null, null, null);
+    }
+  }, [isNfcSupported, isNfcScanning]);
+
+  useEffect(() => {
+    if(lnurlWData != undefined && lnurlPData != undefined) {
+        navigate("/bridge", {
+          state: {
+            title: t("bridgeMode"),
+            lnurlWData,
+            lnurlPData
+          }
+        });
+    }
+  }, [lnurlWData, lnurlPData]);
 
   return (
     <>
@@ -40,6 +72,9 @@ export const Home = () => {
           </ComponentStack>
           <S.IntroText h4 centered weight={600}>
             {t("intro")}
+          </S.IntroText>
+          <S.IntroText h4 centered weight={600}>
+            {t("bridgeIntro")}
           </S.IntroText>
         </ComponentStack>
         <S.MainComponentStack>
