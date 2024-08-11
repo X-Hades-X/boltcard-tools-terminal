@@ -37,6 +37,7 @@ export const useNfc = () => {
   const [lnurlPData, setLnurlPData] = useState<{
      tag?: string;
      callback?: string;
+     description?: string;
      minSendable?: number;
      maxSendable?: number;
      commentAllowed?: number;

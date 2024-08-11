@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "@components/Router";
 import { useToast } from "react-native-toast-notifications";
-import { getBitcoinInvoiceData } from "@utils";
+import { getBitcoinInvoiceData, getPayRequestData } from "@utils";
 import { useTranslation } from "react-i18next";
 
 export const useInvoiceHandler = () => {
@@ -10,26 +10,45 @@ export const useInvoiceHandler = () => {
   const { t } = useTranslation();
 
   const invoiceHandler = useCallback(
-    (value: string) => {
-      const {
-        lightningInvoice,
-        bitcoinAddress,
-        amount,
-        label,
-        message,
-        isValid
-      } = getBitcoinInvoiceData(value);
-
-      if (isValid) {
-        navigate(`/invoice`, {
-          state: {
-            ...(lightningInvoice
-              ? { lightningInvoice }
-              : { bitcoinAddress, amount, label, message })
-          }
-        });
+    async (value: string) => {
+      if(value.indexOf("@") >= 0){
+        const {
+          callback,
+          description,
+          minSendable,
+          maxSendable,
+          isValid
+        } = await getPayRequestData(value)
+        if(isValid) {
+            navigate(`/bridge`, {
+               state: {
+                 lnurlPData: {callback,description, minSendable, maxSendable}
+               }
+            });
+        } else {
+          toast.show(t("errors.invalidInvoice"), { type: "error" });
+        }
       } else {
-        toast.show(t("errors.invalidInvoice"), { type: "error" });
+          const {
+            lightningInvoice,
+            bitcoinAddress,
+            amount,
+            label,
+            message,
+            isValid
+          } = getBitcoinInvoiceData(value);
+
+          if (isValid) {
+            navigate(`/invoice`, {
+              state: {
+                ...(lightningInvoice
+                  ? { lightningInvoice }
+                  : { bitcoinAddress, amount, label, message })
+              }
+            });
+          } else {
+            toast.show(t("errors.invalidInvoice"), { type: "error" });
+          }
       }
     },
     [navigate, t, toast]

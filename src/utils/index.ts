@@ -7,6 +7,7 @@ export { getFormattedUnit } from "./getFormattedUnit";
 export { isApiError } from "./isApiError";
 export { isIcon } from "./isIcon";
 export { getBitcoinInvoiceData } from "./getBitcoinInvoiceData";
+export { getPayRequestData } from "./getPayRequestData";
 export { interpolateColors } from "./interpolateColors";
 export { tupulize } from "./tupulize";
 export { getRandomNumber } from "./getRandomNumber";

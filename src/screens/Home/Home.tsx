@@ -23,6 +23,7 @@ export const Home = () => {
 
   const {
     setupNfc,
+    stopNfc,
     readingNfcLoopWithdraw,
     isNfcScanning,
     lnurlWData,
@@ -86,6 +87,9 @@ export const Home = () => {
             title={t(isNfcSupported ? "scanInvoice" : "nfcNotSupported")}
             disabled={!isNfcSupported}
             onPress={() => {
+              if(isNfcScanning) {
+                stopNfc();
+              }
               navigate("/qr-scanner", {
                 state: {
                   title: t("scanInvoice"),
