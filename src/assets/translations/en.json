@@ -33,7 +33,10 @@
       "nfcNotSupported": "NFC not supported",
       "moreAboutBoltCard": "More about BoltCard",
       "builtBy": "Built by",
-      "foundInvoiceClipboard": "Tap to read invoice from your clipboard"
+      "walletMode": "Scan Bolt Card",
+      "foundInvoiceClipboard": "Tap to read invoice from your clipboard",
+      "foundLnAddrClipboard": "Tap to load LN Address from your clipboard",
+      "foundLnurlClipboard": "Tap to load LNURL from your clipboard"
     },
     "invoice": {
       "tapYourBoltCard": "Tap your Bolt Card",
@@ -41,6 +44,7 @@
       "label": "Label",
       "message": "Message",
       "invoiceAmount": "Invoice amount",
+      "fiatAmount": "Fiat amount",
       "fees": "Fees",
       "requestSwap": "Request swap",
       "nextBatch": "Next batch",
@@ -51,6 +55,17 @@
       "startScanning": "Start scanning",
       "payingInvoice": "Paying invoice",
       "paid": "Paid",
+      "returnToHome": "Return to Home"
+    },
+    "wallet": {
+      "title": "Enter amount",
+      "send": "Send",
+      "receive": "Receive",
+      "tapYourBoltCard": "Tap your Bolt Card.",
+      "tapYourBoltCardReceive": "Tap your Bolt Card to receive %amount%",
+      "sendingPayment": "Sending payment",
+      "loadingWallet": "Loading wallet",
+      "received": "Received",
       "returnToHome": "Return to Home"
     }
   },

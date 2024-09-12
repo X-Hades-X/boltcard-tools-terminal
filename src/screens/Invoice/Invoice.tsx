@@ -32,6 +32,7 @@ import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faBitcoin } from "@fortawesome/free-brands-svg-icons";
 import axios from "axios";
 import * as S from "./styled";
+import { LnurlWData } from "@hooks/useInvoiceCallback";
 
 const numberWithSpaces = (nb: number) =>
   nb.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -39,12 +40,16 @@ const numberWithSpaces = (nb: number) =>
 type InvoiceState = XOR<
   {
     lightningInvoice: string;
+    fiat?: string;
+    fiatAmount?: number;
   },
   {
     bitcoinAddress: string;
     amount: number;
     label?: string;
     message?: string;
+    fiat?: string;
+    fiatAmount?: number;
   }
 >;
 
@@ -67,7 +72,6 @@ export const Invoice = () => {
     callLnurl,
     payInvoice,
     isPaySuccess,
-    lnurlResponse,
     error
   } = useInvoiceCallback();
 
@@ -76,7 +80,9 @@ export const Invoice = () => {
     bitcoinAddress,
     amount,
     label,
-    message
+    message,
+    fiat,
+    fiatAmount
   } = location.state || {};
 
   const [swapLightningInvoice, setSwapLightningInvoice] = useState<string>();
@@ -95,6 +101,7 @@ export const Invoice = () => {
   const [pinConfirmed, setPinConfirmed] = useState<boolean>(false);
   const [pinRequiredChecked, setPinRequiredChecked] = useState<boolean>(false);
   const [pinRequired, setPinRequired] = useState<boolean>(false);
+  const [lnurlw, setLnurlw] = useState<LnurlWData>();
 
   const { satoshis } = decodedInvoice || {};
 
@@ -119,18 +126,22 @@ export const Invoice = () => {
   useEffect(() => {
     if (nfcMessage) {
       setPinRequiredChecked(false);
-      void callLnurl(nfcMessage);
+      callLnurl(nfcMessage).then(response => {
+        if(response && response.tag === 'withdrawRequest') {
+          setLnurlw(response);
+        }
+      });
     }
   }, [nfcMessage]);
 
   // Check if PIN is needed
   useEffect(() => {
-    if (!error && !isPaySuccess && !pinRequiredChecked && lnurlResponse && satoshis) {
-      if (lnurlResponse.tag === 'withdrawRequest') {
-        if (lnurlResponse.pinLimit !== undefined) {
+    if (!error && !isPaySuccess && !pinRequiredChecked && satoshis) {
+      if (lnurlw) {
+        if (lnurlw.pinLimit !== undefined) {
             //if the card has pin enabled
             //check the amount didn't exceed the limit
-            const limitSat = lnurlResponse.pinLimit;
+            const limitSat = lnurlw.pinLimit;
             if (limitSat <= satoshis) {
               setPinRequired(true);
             }
@@ -194,14 +205,14 @@ export const Invoice = () => {
         // debitCardData = withdrawCallbackRequest;
       }
     }
-  }, [lightningInvoice, lnurlResponse, satoshis, isPaySuccess]);
+  }, [lightningInvoice, lnurlw, satoshis, isPaySuccess]);
 
   // Pay invoice after pin requirement is checked and if needed entered by the user
   useEffect(() => {
-    if(!error && lightningInvoice && lnurlResponse && lnurlResponse.k1 && pinRequiredChecked && (pin || !pinRequired)){
-      void payInvoice(lnurlResponse.callback, lnurlResponse.k1, lightningInvoice, pin);
+    if(!error && lightningInvoice && lnurlw && lnurlw.k1 && pinRequiredChecked && (pin || !pinRequired)){
+      void payInvoice(lnurlw.callback, lnurlw.k1, lightningInvoice, pin);
     }
-  }, [lightningInvoice, lnurlResponse, pin, pinRequiredChecked, pinRequired]);
+  }, [lightningInvoice, lnurlw, pin, pinRequiredChecked, pinRequired]);
 
   // Party!!!
   useEffect(() => {
@@ -219,7 +230,7 @@ export const Invoice = () => {
       setPinRequired(false);
       void setupNfc();
     }
-  }, [error])
+  }, [error]);
 
   const onGetSwapQuote = useCallback(async () => {
     if (amount) {
@@ -371,10 +382,19 @@ export const Invoice = () => {
                 valueColor={colors.lightning}
               />
             )}
+            {fiat && fiatAmount && (
+              <ListItem
+                title={t("fiatAmount")}
+                titleColor={colors.white}
+                icon={faBolt}
+                value={`${numberWithSpaces(fiatAmount)} ${fiat}`}
+                valueColor={colors.white}
+              />
+            )}
           </ComponentStack>
         )}
       </ComponentStack>
-      {isPaySuccess ? (
+      {isPaySuccess && satoshis ? (
         <S.SuccessComponentStack gapSize={32}>
           <S.SuccessLottie
             autoPlay
@@ -383,7 +403,7 @@ export const Invoice = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")}
+            {t("paid")} {fiat && fiatAmount ? `${numberWithSpaces(fiatAmount)} ${fiat}\n(${numberWithSpaces(satoshis)} SAT)` : `${numberWithSpaces(satoshis)} SAT`}
           </Text>
           <Button
             icon={faHome}
@@ -393,7 +413,7 @@ export const Invoice = () => {
           />
         </S.SuccessComponentStack>
       ) : pinRequired && !pinConfirmed ? (
-            <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
+            <PinPad pinMode={true} onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
       ) : (
         <Loader
           reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}

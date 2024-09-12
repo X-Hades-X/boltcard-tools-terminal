@@ -4,7 +4,7 @@ import { PickerRoot } from "./components/PickerRoot";
 import { Picker as RootPicker, PickerProps } from "@react-native-picker/picker";
 import { DummyItem } from "./components/DummyItem";
 
-type ItemProps = {
+export type ItemProps = {
   value: string;
   label: string;
 };

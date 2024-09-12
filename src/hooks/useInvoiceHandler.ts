@@ -11,25 +11,31 @@ export const useInvoiceHandler = () => {
 
   const invoiceHandler = useCallback(
     (value: string) => {
-      const {
-        lightningInvoice,
-        bitcoinAddress,
-        amount,
-        label,
-        message,
-        isValid
-      } = getBitcoinInvoiceData(value);
-
-      if (isValid) {
-        navigate(`/invoice`, {
-          state: {
-            ...(lightningInvoice
-              ? { lightningInvoice }
-              : { bitcoinAddress, amount, label, message })
-          }
+      if (value.toLowerCase().indexOf("lnurl") >= 0 || value.indexOf("@") >= 0) {
+        navigate(`/wallet`, {
+          state: {lightningRequest: value}
         });
       } else {
-        toast.show(t("errors.invalidInvoice"), { type: "error" });
+        const {
+          lightningInvoice,
+          bitcoinAddress,
+          amount,
+          label,
+          message,
+          isValid
+        } = getBitcoinInvoiceData(value);
+
+        if (isValid) {
+          navigate(`/invoice`, {
+            state: {
+              ...(lightningInvoice
+                ? { lightningInvoice }
+                : { bitcoinAddress, amount, label, message })
+            }
+          });
+        } else {
+          toast.show(t("errors.invalidInvoice"), { type: "error" });
+        }
       }
     },
     [navigate, t, toast]

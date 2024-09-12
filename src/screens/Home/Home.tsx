@@ -44,6 +44,14 @@ export const Home = () => {
         </ComponentStack>
         <S.MainComponentStack>
           <Button
+            size="large"
+            type="primary"
+            title={t("walletMode")}
+            onPress={() => {
+              navigate("/wallet");
+            }}
+          />
+          <Button
             isRound
             size="circle"
             type="bitcoin"

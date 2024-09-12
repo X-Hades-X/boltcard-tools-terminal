@@ -25,8 +25,8 @@ export const Button = styled(Pressable)<{
   primaryColor: string;
   isRound: boolean;
   isWhiteBackground?: boolean;
+  isIconRight?: boolean;
 }>`
-  flex-direction: row;
 
   ${({
     theme,
@@ -35,7 +35,8 @@ export const Button = styled(Pressable)<{
     primaryColor,
     isRound,
     disabled,
-    isWhiteBackground
+    isWhiteBackground,
+    isIconRight
   }) => {
     const height = (() => {
       switch (size) {
@@ -59,7 +60,12 @@ export const Button = styled(Pressable)<{
       ? theme.colors.secondaryLight
       : theme.colors.primaryLight;
 
+    const flexDirection = isIconRight
+      ? "row-reverse"
+      : "row";
+
     return `
+      flex-direction: ${flexDirection};
       ${
         mode === "normal"
           ? `background-color: ${!disabled ? primaryColor : disabledColor};`
@@ -127,6 +133,7 @@ export const ButtonIcon = styled(Icon)
 type ButtonTextProps = {
   buttonSize: Size;
   hasIcon: boolean;
+  isIconRight: boolean;
 };
 
 const TEXT_MARGIN = 6;
@@ -140,15 +147,15 @@ export const ButtonText = styled(Text).attrs(
     };
   }
 )<ButtonTextProps>`
-  ${({ hasIcon, buttonSize }) => {
+  ${({ hasIcon, buttonSize, isIconRight }) => {
     const iconPlusMarginSize = hasIcon
       ? getIconSize(buttonSize) + TEXT_MARGIN
       : 0;
 
     return `
-      margin-left: ${hasIcon ? TEXT_MARGIN : 0}px;
+      margin-left: ${hasIcon && !isIconRight ? TEXT_MARGIN : 0}px;
       margin-${buttonSize !== "circle" ? "right" : "top"}: ${
-        buttonSize === "circle"
+        buttonSize === "circle" || isIconRight
           ? TEXT_MARGIN * 1.5
           : buttonSize !== "small"
           ? iconPlusMarginSize
