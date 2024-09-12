@@ -22,7 +22,7 @@ import {
 import addDays from "date-fns/addDays";
 import intlFormat from "date-fns/intlFormat";
 import bolt11, { PaymentRequestObject } from "bolt11";
-import { useNfc } from "@hooks";
+import { useNfc, useInvoiceCallback } from "@hooks";
 import { XOR } from "ts-essentials";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -55,18 +55,21 @@ export const Invoice = () => {
   const location = useLocation<InvoiceState>();
   const { colors } = useTheme();
   const {
+    nfcMessage,
     setupNfc,
     readingNfcLoop,
     stopNfc,
     isNfcAvailable,
     isNfcScanning,
-    isNfcLoading,
     isNfcNeedsTap,
-    isNfcActionSuccess,
-    isPinRequired,
-    isPinConfirmed,
-    setPin
   } = useNfc();
+  const {
+    callLnurl,
+    payInvoice,
+    isPaySuccess,
+    lnurlResponse,
+    error
+  } = useInvoiceCallback();
 
   const {
     lightningInvoice: stateLightningInvoice,
@@ -88,6 +91,11 @@ export const Invoice = () => {
   const [swapFees, setSwapFees] = useState<number>();
   const [decodedInvoice, setDecodedInvoice] = useState<PaymentRequestObject>();
 
+  const [pin, setPin] = useState<string>();
+  const [pinConfirmed, setPinConfirmed] = useState<boolean>(false);
+  const [pinRequiredChecked, setPinRequiredChecked] = useState<boolean>(false);
+  const [pinRequired, setPinRequired] = useState<boolean>(false);
+
   const { satoshis } = decodedInvoice || {};
 
   useEffect(() => {
@@ -100,18 +108,118 @@ export const Invoice = () => {
     }
   }, [lightningInvoice]);
 
+  // Read NFC Message
   useEffect(() => {
     if (isNfcAvailable && !isNfcNeedsTap && lightningInvoice) {
-      void readingNfcLoop(lightningInvoice, satoshis);
+      void readingNfcLoop();
     }
-  }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap, lightningInvoice, satoshis]);
+  }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap, lightningInvoice]);
 
+  // Fetch data from the URL in the NFC Message
   useEffect(() => {
-    if (isNfcActionSuccess) {
+    if (nfcMessage) {
+      setPinRequiredChecked(false);
+      void callLnurl(nfcMessage);
+    }
+  }, [nfcMessage]);
+
+  // Check if PIN is needed
+  useEffect(() => {
+    if (!error && !isPaySuccess && !pinRequiredChecked && lnurlResponse && satoshis) {
+      if (lnurlResponse.tag === 'withdrawRequest') {
+        if (lnurlResponse.pinLimit !== undefined) {
+            //if the card has pin enabled
+            //check the amount didn't exceed the limit
+            const limitSat = lnurlResponse.pinLimit;
+            if (limitSat <= satoshis) {
+              setPinRequired(true);
+            }
+        } else {
+          setPinRequired(false);
+        }
+        setPinRequiredChecked(true);
+      } else {
+        // TODO copied from useNfc during refactor; probably going somewhere else
+        // const { data: cardRequest } = await axios.get<{ payLink?: string }>(
+        //   lnHttpsRequest
+        // );
+        // if (!cardRequest.payLink) throw getError("Invalid tag. No payLink");
+        // let finalUrl = cardRequest.payLink;
+        // if (finalUrl.startsWith("lnurlp://")) {
+        //   finalUrl = finalUrl.replace("lnurlp", "https");
+        // }
+        // const { data: finalUrlRequest } = await axios.get<{
+        //   tag?: string;
+        //   callback?: string;
+        //   minSendable?: number;
+        //   maxSendable?: number;
+        //   commentAllowed?: number;
+        // }>(finalUrl);
+        // if (finalUrlRequest.tag !== "payRequest")
+        //   throw getError("Invalid tag. tag is not payRequest");
+        // if (!finalUrlRequest.callback)
+        //   throw getError("Invalid tag. No callback");
+        // if (
+        //   !finalUrlRequest.minSendable ||
+        //   finalUrlRequest.minSendable / 1000 > amount
+        // )
+        //   throw getError("Invalid tag. minSendable undefined or too high");
+        // if (
+        //   !finalUrlRequest.maxSendable ||
+        //   finalUrlRequest.maxSendable / 1000 < amount
+        // )
+        //   throw getError("Invalid tag. maxSendable undefined or too low");
+        // const fullTitle = `${title || ""}${
+        //   description ? `- ${description}` : ""
+        // }`;
+        // const { data: callbackRequest } = await axios.get<{ pr?: string }>(
+        //   `${finalUrlRequest.callback}?amount=${(amount || 0) * 1000}${
+        //     (finalUrlRequest.commentAllowed || 0) >= fullTitle.length
+        //       ? `&comment=${fullTitle}`
+        //       : ""
+        //   }`
+        // );
+        // if (!callbackRequest.pr) throw getError("Invalid tag. No pr defined");
+        // const { data: withdrawCallbackRequest } = await axios.get<{
+        //   status?: string;
+        // }>(withdrawCallbackData.callback, {
+        //   params: {
+        //     pr: callbackRequest.pr,
+        //     k1: withdrawCallbackData.k1
+        //   }
+        // });
+        // if (withdrawCallbackRequest.status !== "OK")
+        //   throw getError("Impossible to top-up card.");
+        // setIsPaid(true);
+        // debitCardData = withdrawCallbackRequest;
+      }
+    }
+  }, [lightningInvoice, lnurlResponse, satoshis, isPaySuccess]);
+
+  // Pay invoice after pin requirement is checked and if needed entered by the user
+  useEffect(() => {
+    if(!error && lightningInvoice && lnurlResponse && lnurlResponse.k1 && pinRequiredChecked && (pin || !pinRequired)){
+      void payInvoice(lnurlResponse.callback, lnurlResponse.k1, lightningInvoice, pin);
+    }
+  }, [lightningInvoice, lnurlResponse, pin, pinRequiredChecked, pinRequired]);
+
+  // Party!!!
+  useEffect(() => {
+    if (isPaySuccess) {
       Vibration.vibrate(50);
       setBackgroundColor(colors.success, 500);
     }
-  }, [isNfcActionSuccess]);
+  }, [isPaySuccess]);
+
+  // :( reset and try again
+  useEffect(() => {
+    if (error) {
+      setPin(undefined);
+      setPinConfirmed(false);
+      setPinRequired(false);
+      void setupNfc();
+    }
+  }, [error])
 
   const onGetSwapQuote = useCallback(async () => {
     if (amount) {
@@ -152,7 +260,7 @@ export const Invoice = () => {
 
   return (
     <S.InvoicePageContainer
-      {...(!isNfcActionSuccess
+      {...(!isPaySuccess
         ? !decodedInvoice
           ? {
               footerButton: {
@@ -168,16 +276,16 @@ export const Invoice = () => {
                 type: "bitcoin",
                 title: t("startScanning"),
                 onPress: () => {
-                  void readingNfcLoop(lightningInvoice, satoshis);
+                  void readingNfcLoop();
                 }
               }
             }
           : {}
         : {})}
-      isContentVerticallyCentered={isNfcActionSuccess}
+      isContentVerticallyCentered={isPaySuccess}
     >
       <ComponentStack>
-        {!isNfcActionSuccess && (
+        {!isPaySuccess && (
           <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
             <ListItem
               title={t("network")}
@@ -266,7 +374,7 @@ export const Invoice = () => {
           </ComponentStack>
         )}
       </ComponentStack>
-      {isNfcActionSuccess ? (
+      {isPaySuccess ? (
         <S.SuccessComponentStack gapSize={32}>
           <S.SuccessLottie
             autoPlay
@@ -284,13 +392,13 @@ export const Invoice = () => {
             onPress={onReturnToHome}
           />
         </S.SuccessComponentStack>
-      ) : isPinRequired && !isPinConfirmed ? (
-            <PinPad onPinEntered={setPin}/>
-      ) : isNfcLoading || isNfcScanning ? (
+      ) : pinRequired && !pinConfirmed ? (
+            <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
+      ) : (
         <Loader
-          reason={t(isNfcLoading ? "payingInvoice" : "tapYourBoltCard")}
+          reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}
         />
-      ) : null}
+      )}
     </S.InvoicePageContainer>
   );
 };

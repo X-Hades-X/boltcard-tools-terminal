@@ -9,3 +9,4 @@ export { useIsCameraAvailable } from "./useIsCameraAvailable";
 export { useNfc } from "./useNfc";
 export { useRates } from "./useRates";
 export { useVersionTag } from "./useVersionTag";
+export { useInvoiceCallback } from "./useInvoiceCallback";
