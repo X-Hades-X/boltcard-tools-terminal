@@ -393,7 +393,7 @@ export const Invoice = () => {
           />
         </S.SuccessComponentStack>
       ) : pinRequired && !pinConfirmed ? (
-            <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
+            <PinPad pinMode={true} onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
       ) : (
         <Loader
           reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}

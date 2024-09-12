@@ -6,7 +6,7 @@ import axios from "axios";
 import { isApiError } from "@utils";
 import { XOR } from "ts-essentials";
 
-type InvoiceRequest = XOR<
+export type LnurlWData =
   {
     tag: "withdrawRequest";
     callback: string;
@@ -15,17 +15,22 @@ type InvoiceRequest = XOR<
     minWithdrawable: number;
     maxWithdrawable: number;
     pinLimit?: number;
-  },
+    balanceCheck?: string;
+    payLink?: string;
+  };
+
+export type LnurlPData =
   {
     tag: "payRequest";
     callback: string;
     minSendable: number;
     maxSendable: number;
     metadata: string;
-  }
->;
+  };
 
-type CallbackResponse =   {
+export type InvoiceRequest = XOR<LnurlWData, LnurlPData>;
+
+type CallbackResponse = {
   reason: string;
   status: "OK" | "ERROR";
 };
@@ -36,6 +41,7 @@ export const useInvoiceCallback = () => {
   const toast = useToast();
   const { t } = useTranslation(undefined, { keyPrefix: "errors" });
   const [lnurlResponse, setLnurlResponse] = useState<InvoiceRequest>();
+  const [pr, setPr] = useState<string>();
   const [error, setError] = useState<CallbackResponse>();
   const [isPaySuccess, setIsPaySuccess] = useState(false);
 
@@ -71,7 +77,7 @@ export const useInvoiceCallback = () => {
         !lnurl.startsWith(lnurlwPrefix) &&
         !lnurl.startsWith(lnurlpPrefix)
       ) {
-        setError({ status: "ERROR", reason: t("errors.invalidLightningTag")});
+        setError({ status: "ERROR", reason: t("errors.invalidLightningTag") });
         return;
       }
 
@@ -105,7 +111,7 @@ export const useInvoiceCallback = () => {
         if (isApiError(e)) {
           const reason = e.response.data.reason;
           setError({
-            reason:  typeof reason === 'string' ? reason : reason.detail,
+            reason: typeof reason === "string" ? reason : reason.detail,
             status: "ERROR"
           });
         }
@@ -113,7 +119,7 @@ export const useInvoiceCallback = () => {
     }, [t]
   );
 
-  const payInvoice = useCallback(async (cb:string, k1: string, lightningInvoice: string, pin?: string) => {
+  const payInvoice = useCallback(async (cb: string, k1: string, lightningInvoice: string, pin?: string) => {
     try {
       const { data: callbackResponseData } = await axios.get<{
         reason: string;
@@ -128,22 +134,50 @@ export const useInvoiceCallback = () => {
 
       if (callbackResponseData.status === "ERROR") {
         setError({
-          reason:  callbackResponseData.reason,
+          reason: callbackResponseData.reason,
           status: "ERROR"
         });
-      }else {
+      } else {
         setIsPaySuccess(true);
       }
     } catch (e) {
       if (isApiError(e)) {
         const reason = e.response.data.reason;
         setError({
-          reason:  typeof reason === 'string' ? reason : reason.detail,
+          reason: typeof reason === "string" ? reason : reason.detail,
           status: "ERROR"
         });
       }
     }
   }, []);
 
-  return { callLnurl, payInvoice, isPaySuccess, lnurlResponse, error };
+  const requestInvoice = useCallback(async (lnurlp: LnurlPData, amount: number) => {
+    let error;
+    if(lnurlp.minSendable / 1000 > amount) {
+      setError({
+        reason: "Amount is lower than min sendable. Can't make payRequest.",
+        status: "ERROR"
+      });
+      return;
+    } else if(lnurlp.maxSendable / 1000 < amount) {
+      setError({
+        reason: "Amount is higher than max sendable. Can't make payRequest.",
+        status: "ERROR"
+      });
+      return;
+    }
+
+    if (!error) {
+      const { data: payLinkResponseData } = await axios.get<{ pr: string }>(
+        lnurlp.callback, {
+          params: {
+            amount: amount * 1000
+          }
+        });
+
+      setPr(payLinkResponseData.pr);
+    }
+  }, []);
+
+  return { callLnurl, payInvoice, requestInvoice, isPaySuccess, lnurlResponse, pr, error };
 };

@@ -12,6 +12,7 @@ type RootButtonProps = StyledComponentComponentProps<typeof S.Button>;
 type ButtonProps = {
   title?: string;
   icon?: IconProp;
+  isIconRight?: boolean;
   type?: "primary" | "success" | "error" | "bitcoin";
   isLoading?: boolean;
   disabled?: boolean;
@@ -35,6 +36,7 @@ export const Button = ({
   disabled = isLoading,
   copyContent,
   icon = copyContent ? faCopy : undefined,
+  isIconRight = false,
   ...props
 }: ButtonProps) => {
   const theme = useTheme();
@@ -97,6 +99,7 @@ export const Button = ({
       {...props}
       mode={mode}
       size={size}
+      isIconRight={isIconRight}
       primaryColor={primaryColor}
       disabled={disabled || isLoading}
       isRound={(!!icon && !title) || size === "circle"}
@@ -117,6 +120,7 @@ export const Button = ({
           numberOfLines={size !== "circle" ? 1 : undefined}
           weight={700}
           buttonSize={size}
+          isIconRight={isIconRight}
           color={!isLoading ? secondaryColor : "transparent"}
           hasIcon={!!icon}
         >

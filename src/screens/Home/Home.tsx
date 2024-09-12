@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "@components/Router";
 import { Button, ComponentStack, PageContainer, Pressable } from "@components";
-import { faCamera, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCamera, faHome, faXmark } from "@fortawesome/free-solid-svg-icons";
 // @ts-ignore
 import AnimatedLinearGradient from "react-native-animated-linear-gradient";
 import { colors } from "./gradient-config";
@@ -41,8 +41,18 @@ export const Home = () => {
           <S.IntroText h4 centered weight={600}>
             {t("intro")}
           </S.IntroText>
+          <S.IntroText h4 centered weight={600}>
+            {t("walletIntro")}
+          </S.IntroText>
         </ComponentStack>
         <S.MainComponentStack>
+          <Button
+            size="large"
+            title={t("walletMode")}
+            onPress={() => {
+              navigate("/wallet");
+            }}
+          />
           <Button
             isRound
             size="circle"
