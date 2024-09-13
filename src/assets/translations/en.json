@@ -29,13 +29,13 @@
   "screens": {
     "home": {
       "intro": "This app is a simple utility tool to help you paying Lightning invoices on devices/platforms that do not directly support BoltCards, such as websites, custom machines, and others.",
-      "walletIntro": "With \"Wallet Mode\" you can send or receive funds from one Bolt Card to another.",
       "scanInvoice": "Scan invoice",
       "nfcNotSupported": "NFC not supported",
       "moreAboutBoltCard": "More about BoltCard",
       "builtBy": "Built by",
-      "walletMode": "Wallet Mode",
-      "foundInvoiceClipboard": "Tap to read invoice from your clipboard"
+      "walletMode": "Scan Bolt Card",
+      "foundInvoiceClipboard": "Tap to read invoice from your clipboard",
+      "foundLnurlClipboard": "Tap to load LNURL from your clipboard"
     },
     "invoice": {
       "tapYourBoltCard": "Tap your Bolt Card",
@@ -59,9 +59,10 @@
       "title": "Enter amount (SATs)",
       "send": "Send",
       "receive": "Receive",
-      "tapYourBoltCard": "Tap your Bolt Card to initialize the wallet.",
+      "tapYourBoltCard": "Tap your Bolt Card.",
       "tapYourBoltCardReceive": "Tap your Bolt Card to receive.",
       "sendingPayment": "Sending payment",
+      "loadingWallet": "Loading wallet",
       "received": "Received",
       "returnToHome": "Return to Home"
     }

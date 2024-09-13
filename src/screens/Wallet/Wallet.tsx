@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "@components/Router";
+import { useLocation, useNavigate } from "@components/Router";
 import {
   PinPad,
   Loader,
@@ -23,8 +23,13 @@ import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import AnimatedLinearGradient from "react-native-animated-linear-gradient";
 import { colors as gradiantColors } from "./gradient-config";
 
+type LightningRequest = {
+    lightningRequest: string;
+};
+
 export const Wallet = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.wallet" });
+  const location = useLocation<LightningRequest>();
   const navigate = useNavigate();
   const { setBackgroundColor } = useContext(ThemeContext);
   const { colors } = useTheme();
@@ -55,10 +60,16 @@ export const Wallet = () => {
   const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
   const [payingInvoice, setPayingInvoice] = useState<boolean>(false);
 
+  const {
+    lightningRequest
+  } = location.state || {};
+
   useEffect(() => {
     setBackgroundColor(colors.primary, 0);
-    void setupNfc();
-  }, []);
+    if(!lightningRequest) {
+      void setupNfc();
+    }
+  }, [lightningRequest]);
 
   // Read NFC Message
   useEffect(() => {
@@ -70,17 +81,23 @@ export const Wallet = () => {
 
   // Fetch data from the URL in the NFC Message
   useEffect(() => {
-    if (nfcMessage) {
-      callLnurl(nfcMessage).then(wResponse => {
-        if(wResponse && wResponse.tag === 'withdrawRequest') {
-          setLnurlw(wResponse);
+    setLoadingWallet(true);
+    const request = nfcMessage ? nfcMessage : lightningRequest;
+    if (request) {
+      callLnurl(request).then(response => {
+        if(response) {
           setLoadingWallet(false);
-          if (!lnurlp && wResponse.payLink) {
-            callLnurl(wResponse.payLink).then(pResponse => {
-              if(pResponse && pResponse.tag === 'payRequest') {
-                setLnurlp(pResponse);
-              }
-            });
+          if(response.tag === 'withdrawRequest') {
+            setLnurlw(response);
+            if (!lnurlp && response.payLink) {
+              callLnurl(response.payLink).then(payResponse => {
+                if(payResponse && payResponse.tag === 'payRequest') {
+                  setLnurlp(payResponse);
+                }
+              });
+            }
+          } else if (response.tag === 'payRequest') {
+            setLnurlp(response);
           }
         }
       });
@@ -255,10 +272,12 @@ export const Wallet = () => {
         </S.CenterComponentStack>
       ) : pinRequired && !isNfcScanning ? (
         <PinPad onPinEntered={onPin} pinMode={true}/>
-      ) : isNfcScanning || withdraw ? (
+      ) : isNfcScanning || withdraw || lightningRequest ? (
         <S.CenterComponentStack>
           <Loader
-            reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw) ? (isNfcScanning ? "tapYourBoltCardReceive" : "sendingPayment") : "tapYourBoltCard")}
+            reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw || lightningRequest) ?
+              (isNfcScanning ? "tapYourBoltCardReceive" : (withdraw ? "sendingPayment" : "loadingWallet")) :
+              "tapYourBoltCard")}
           />
         </S.CenterComponentStack>
       ) : null}

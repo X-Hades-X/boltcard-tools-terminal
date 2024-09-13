@@ -16,33 +16,49 @@ export const useInitialClipboard = () => {
 
   const checkClipboard = useCallback(async () => {
     const clipboardData = await Clipboard.getString();
-
-    const {
-      isValid,
-      lightningInvoice,
-      bitcoinAddress,
-      amount,
-      label,
-      message
-    } = getBitcoinInvoiceData(clipboardData);
-
-    if (isValid) {
-      const toastId = toast.show(t("foundInvoiceClipboard"), {
+    if(clipboardData.indexOf("@") >= 0){
+      const splitLnAddress = clipboardData.split("@");
+      const lightningRequest = `lnurlp://${splitLnAddress[1]}/.well-known/lnurlp/${splitLnAddress[0]}`;
+      const toastId = toast.show(t("foundLnurlClipboard"), {
         type: "info",
         // @ts-ignore
         icon: faFileInvoice,
         duration: 10000,
         onPress: () => {
           toast.hide(toastId);
-          navigate(`/invoice`, {
-            state: {
-              ...(lightningInvoice
-                ? { lightningInvoice }
-                : { bitcoinAddress, amount, label, message })
-            }
+          navigate(`/wallet`, {
+            state: {lightningRequest}
           });
         }
       });
+    } else {
+      const {
+        isValid,
+        lightningInvoice,
+        bitcoinAddress,
+        amount,
+        label,
+        message
+      } = getBitcoinInvoiceData(clipboardData);
+
+      if (isValid) {
+        const toastId = toast.show(t("foundInvoiceClipboard"), {
+          type: "info",
+          // @ts-ignore
+          icon: faFileInvoice,
+          duration: 10000,
+          onPress: () => {
+            toast.hide(toastId);
+            navigate(`/invoice`, {
+              state: {
+                ...(lightningInvoice
+                  ? { lightningInvoice }
+                  : { bitcoinAddress, amount, label, message })
+              }
+            });
+          }
+        });
+      }
     }
   }, [navigate, t, toast]);
 
