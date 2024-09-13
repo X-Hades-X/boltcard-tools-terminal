@@ -388,7 +388,7 @@ export const Invoice = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")}
+            {t("paid")} {satoshis} sats
           </Text>
           <Button
             icon={faHome}

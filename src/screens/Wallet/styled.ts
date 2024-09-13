@@ -43,7 +43,7 @@ export const WalletComponentStack = styled(ComponentStack)`
   align-items: center;
 `;
 
-export const SuccessComponentStack = styled(ComponentStack)`
+export const CenterComponentStack = styled(ComponentStack)`
   align-items: center;
   justify-content: center;
   height: 100%;

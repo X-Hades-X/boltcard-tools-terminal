@@ -151,7 +151,6 @@ export const useInvoiceCallback = () => {
   }, []);
 
   const requestInvoice = useCallback(async (lnurlp: LnurlPData, amount: number) => {
-    let error;
     if(lnurlp.minSendable / 1000 > amount) {
       setError({
         reason: "Amount is lower than min sendable. Can't make payRequest.",
@@ -175,7 +174,7 @@ export const useInvoiceCallback = () => {
         });
       return payLinkResponseData.pr;
     }
-  }, []);
+  }, [error]);
 
   return { callLnurl, payInvoice, requestInvoice, isPaySuccess, error };
 };

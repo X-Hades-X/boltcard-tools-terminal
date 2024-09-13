@@ -61,8 +61,8 @@
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card to initialize the wallet.",
       "tapYourBoltCardReceive": "Tap your Bolt Card to receive.",
-      "payingInvoice": "Paying invoice",
-      "paid": "Paid",
+      "sendingPayment": "Sending payment",
+      "received": "Received",
       "returnToHome": "Return to Home"
     }
   },

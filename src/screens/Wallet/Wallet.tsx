@@ -19,6 +19,9 @@ import { Vibration } from "react-native";
 import { useTheme } from "styled-components";
 import * as S from "./styled";
 import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
+// @ts-ignore
+import AnimatedLinearGradient from "react-native-animated-linear-gradient";
+import { colors as gradiantColors } from "./gradient-config";
 
 export const Wallet = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.wallet" });
@@ -53,6 +56,7 @@ export const Wallet = () => {
   const [payingInvoice, setPayingInvoice] = useState<boolean>(false);
 
   useEffect(() => {
+    setBackgroundColor(colors.primary, 0);
     void setupNfc();
   }, []);
 
@@ -102,7 +106,7 @@ export const Wallet = () => {
     if (lnurlw && amount) {
       setPin(undefined);
 
-      let isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit <= amount : false;
+      const isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit <= amount : false;
       setPinRequired(isPinRequired);
       if(!isPinRequired) {
         setPayingInvoice(true);
@@ -112,10 +116,10 @@ export const Wallet = () => {
         void setupNfc();
       }
     }
-  }, [lnurlw, amount]);
+  }, [setupNfc, lnurlw, amount]);
 
-  const onPin = useCallback((pin: string) => {
-    setPin(pin);
+  const onPin = useCallback((input: string) => {
+    setPin(input);
     setPinRequired(false);
 
     setPayingInvoice(true);
@@ -124,7 +128,7 @@ export const Wallet = () => {
     setLnurlp(undefined);
 
     void setupNfc();
-  }, [lnurlw]);
+  }, [setupNfc, lnurlw]);
 
   const onReceive = useCallback(() => {
     if (lnurlp && amount) {
@@ -134,7 +138,7 @@ export const Wallet = () => {
         });
       });
     }
-  }, [lnurlp, amount]);
+  }, [requestInvoice, navigate, lnurlp, amount]);
 
   const onReturnToHome = useCallback(() => {
     navigate("/");
@@ -159,6 +163,8 @@ export const Wallet = () => {
   }, [error]);
 
   return (
+    <>
+    {(loadingWallet || payingInvoice) && <AnimatedLinearGradient customColors={gradiantColors} speed={6000} />}
     <S.WalletPageContainer>
       {!isPaySuccess && !isNfcScanning && !loadingWallet && !payingInvoice ? (
         <S.WalletComponentStack>
@@ -221,14 +227,16 @@ export const Wallet = () => {
           </S.WalletButtonWrapper>
           {!pinRequired ? (
             <PinPad onPinEntered={(value)=> {
-              if (value && value != "") {
+              if (value && value !== "") {
                 setAmount(parseInt(value));
+              } else if (value !== undefined){
+                setAmount(0);
               }
             }} pinMode={false}/>) : null}
         </S.WalletComponentStack>
       ) : null}
       {isPaySuccess ? (
-        <S.SuccessComponentStack gapSize={32}>
+        <S.CenterComponentStack gapSize={32}>
           <S.SuccessLottie
             autoPlay
             loop={false}
@@ -236,7 +244,7 @@ export const Wallet = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")}
+            {t("received")} {amount} sats
           </Text>
           <Button
             icon={faHome}
@@ -244,14 +252,17 @@ export const Wallet = () => {
             title={t("returnToHome")}
             onPress={onReturnToHome}
           />
-        </S.SuccessComponentStack>
+        </S.CenterComponentStack>
       ) : pinRequired && !isNfcScanning ? (
         <PinPad onPinEntered={onPin} pinMode={true}/>
       ) : isNfcScanning || withdraw ? (
-        <Loader
-          reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw) ? (isNfcScanning ? "tapYourBoltCardReceive" : "payingInvoice") : "tapYourBoltCard")}
-        />
+        <S.CenterComponentStack>
+          <Loader
+            reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw) ? (isNfcScanning ? "tapYourBoltCardReceive" : "sendingPayment") : "tapYourBoltCard")}
+          />
+        </S.CenterComponentStack>
       ) : null}
     </S.WalletPageContainer>
+    </>
   );
 };

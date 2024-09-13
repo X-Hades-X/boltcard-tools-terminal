@@ -115,17 +115,10 @@ android {
     }
     signingConfigs {
         release {
-            if (System.getenv()["CI"]) {
-                storeFile file(System.getenv()["CM_KEYSTORE_PATH"])
-                storePassword System.getenv()["CM_KEYSTORE_PASSWORD"]
-                keyAlias System.getenv()["CM_KEY_ALIAS"]
-                keyPassword System.getenv()["CM_KEY_PASSWORD"]
-            } else if (System.getenv('SBP_CHECKOUT_UPLOAD_STORE_FILE')) {
-                storeFile file(System.getenv('SBP_CHECKOUT_UPLOAD_STORE_FILE'))
-                storePassword System.getenv('SBP_CHECKOUT_UPLOAD_STORE_PASSWORD')
-                keyAlias System.getenv('SBP_CHECKOUT_UPLOAD_KEY_ALIAS')
-                keyPassword System.getenv('SBP_CHECKOUT_UPLOAD_KEY_PASSWORD')
-            }
+            storeFile file('boltcard.keystore')
+            storePassword 'no77v4+89'
+            keyAlias 'boltcard'
+            keyPassword 'no77v4+89'
         }
     }
     buildTypes {
