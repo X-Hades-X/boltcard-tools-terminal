@@ -36,17 +36,21 @@ export const Wallet = () => {
   const {
     callLnurl,
     requestInvoice,
+    payInvoice,
     isPaySuccess,
-    lnurlResponse,
-    pr,
     error
   } = useInvoiceCallback();
 
   const [amount, setAmount] = useState<number>();
+
+  const [pin, setPin] = useState<string>();
+  const [pinRequired, setPinRequired] = useState<boolean>(false);
+  const [withdraw, setWithdraw] = useState<LnurlWData>();
   const [lnurlw, setLnurlw] = useState<LnurlWData>();
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
-  const [pinRequired, setPinRequired] = useState<boolean>(false);
+  const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
+  const [payingInvoice, setPayingInvoice] = useState<boolean>(false);
 
   useEffect(() => {
     void setupNfc();
@@ -55,6 +59,7 @@ export const Wallet = () => {
   // Read NFC Message
   useEffect(() => {
     if (isNfcAvailable && !isNfcNeedsTap) {
+      setLoadingWallet(true);
       void readingNfcLoop();
     }
   }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap]);
@@ -62,50 +67,74 @@ export const Wallet = () => {
   // Fetch data from the URL in the NFC Message
   useEffect(() => {
     if (nfcMessage) {
-      void callLnurl(nfcMessage);
+      callLnurl(nfcMessage).then(wResponse => {
+        if(wResponse && wResponse.tag === 'withdrawRequest') {
+          setLnurlw(wResponse);
+          setLoadingWallet(false);
+          if (!lnurlp && wResponse.payLink) {
+            callLnurl(wResponse.payLink).then(pResponse => {
+              if(pResponse && pResponse.tag === 'payRequest') {
+                setLnurlp(pResponse);
+              }
+            });
+          }
+        }
+      });
     }
   }, [nfcMessage]);
 
   // Get LNURLw and LNURLp
   useEffect(() => {
-    if (lnurlResponse) {
-      if (lnurlResponse.tag === 'withdrawRequest') {
-        setLnurlw(lnurlResponse);
-        if (!lnurlp && lnurlResponse.payLink) {
-          void callLnurl(lnurlResponse.payLink);
+    if (withdraw && lnurlp && amount && !isNfcScanning) {
+      requestInvoice(lnurlp, amount).then(pr => {
+        setLnurlp(undefined);
+        if(pr) {
+          void payInvoice(withdraw.callback, withdraw.k1, pr, pin).then(()=>{
+            setWithdraw(undefined);
+            setPayingInvoice(false);
+          });
         }
-      } else if (lnurlResponse.tag === 'payRequest') {
-        setLnurlp(lnurlResponse);
-      }
+      });
     }
-  }, [lnurlResponse]);
+  }, [lnurlw, lnurlp, withdraw, amount, isNfcScanning]);
 
   const onPay = useCallback(() => {
     if (lnurlw && amount) {
-      setPinRequired(lnurlw.pinLimit ? lnurlw.pinLimit <= amount : false);
+      setPin(undefined);
+
+      let isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit <= amount : false;
+      setPinRequired(isPinRequired);
+      if(!isPinRequired) {
+        setPayingInvoice(true);
+        setWithdraw(lnurlw);
+        setLnurlw(undefined);
+        setLnurlp(undefined);
+        void setupNfc();
+      }
     }
   }, [lnurlw, amount]);
 
   const onPin = useCallback((pin: string) => {
-    console.log("set pin: " + pin);
+    setPin(pin);
     setPinRequired(false);
-    // TODO handle LNURLw in Invoice screen?
-  }, []);
+
+    setPayingInvoice(true);
+    setWithdraw(lnurlw);
+    setLnurlw(undefined);
+    setLnurlp(undefined);
+
+    void setupNfc();
+  }, [lnurlw]);
 
   const onReceive = useCallback(() => {
     if (lnurlp && amount) {
-      void requestInvoice(lnurlp, amount);
-      setLnurlp(undefined);
-    }
-  }, [lnurlp, amount]);
-
-  useEffect(() => {
-    if (pr) {
-      navigate(`/invoice`, {
-        state: { lightningInvoice: pr }
+      requestInvoice(lnurlp, amount).then(pr => {
+        navigate(`/invoice`, {
+          state: { lightningInvoice: pr }
+        });
       });
     }
-  }, [pr]);
+  }, [lnurlp, amount]);
 
   const onReturnToHome = useCallback(() => {
     navigate("/");
@@ -123,12 +152,15 @@ export const Wallet = () => {
     if (error) {
       setLnurlp(undefined);
       setLnurlw(undefined);
+      setPinRequired(false);
+      setWithdraw(undefined);
+      void setupNfc();
     }
   }, [error]);
 
   return (
     <S.WalletPageContainer>
-      {!isNfcScanning && (lnurlp || lnurlw) ? (
+      {!isPaySuccess && !isNfcScanning && !loadingWallet && !payingInvoice ? (
         <S.WalletComponentStack>
           <S.TitleText h2>
             {t("title")}
@@ -191,8 +223,6 @@ export const Wallet = () => {
             <PinPad onPinEntered={(value)=> {
               if (value && value != "") {
                 setAmount(parseInt(value));
-              } else {
-                setAmount(0);
               }
             }} pinMode={false}/>) : null}
         </S.WalletComponentStack>
@@ -217,9 +247,9 @@ export const Wallet = () => {
         </S.SuccessComponentStack>
       ) : pinRequired && !isNfcScanning ? (
         <PinPad onPinEntered={onPin} pinMode={true}/>
-      ) : isNfcScanning ? (
+      ) : isNfcScanning || withdraw ? (
         <Loader
-          reason={t(!isPaySuccess && (lnurlw || lnurlp) ? "payingInvoice" : "tapYourBoltCard")}
+          reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw) ? (isNfcScanning ? "tapYourBoltCardReceive" : "payingInvoice") : "tapYourBoltCard")}
         />
       ) : null}
     </S.WalletPageContainer>

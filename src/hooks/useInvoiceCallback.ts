@@ -40,8 +40,6 @@ type InvoiceResponse = XOR<InvoiceRequest, CallbackResponse>;
 export const useInvoiceCallback = () => {
   const toast = useToast();
   const { t } = useTranslation(undefined, { keyPrefix: "errors" });
-  const [lnurlResponse, setLnurlResponse] = useState<InvoiceRequest>();
-  const [pr, setPr] = useState<string>();
   const [error, setError] = useState<CallbackResponse>();
   const [isPaySuccess, setIsPaySuccess] = useState(false);
 
@@ -57,7 +55,6 @@ export const useInvoiceCallback = () => {
 
   const callLnurl = useCallback(
     async (lnurl: string) => {
-      setLnurlResponse(undefined);
       setIsPaySuccess(false);
       setError(undefined);
 
@@ -102,8 +99,10 @@ export const useInvoiceCallback = () => {
 
       try {
         const { data: cardDataResponse } = await axios.get<InvoiceResponse>(cardData);
-        if (cardDataResponse.tag) {
-          setLnurlResponse(cardDataResponse);
+        if (cardDataResponse.tag === 'withdrawRequest') {
+          return cardDataResponse;
+        } else if (cardDataResponse.tag === 'payRequest') {
+          return cardDataResponse;
         } else if (cardDataResponse.status === "ERROR") {
           setError(cardDataResponse);
         }
@@ -174,10 +173,9 @@ export const useInvoiceCallback = () => {
             amount: amount * 1000
           }
         });
-
-      setPr(payLinkResponseData.pr);
+      return payLinkResponseData.pr;
     }
   }, []);
 
-  return { callLnurl, payInvoice, requestInvoice, isPaySuccess, lnurlResponse, pr, error };
+  return { callLnurl, payInvoice, requestInvoice, isPaySuccess, error };
 };
