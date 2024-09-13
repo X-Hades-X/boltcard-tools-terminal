@@ -17,6 +17,10 @@ export const useInvoiceHandler = () => {
         navigate(`/wallet`, {
           state: {lightningRequest}
         });
+      } else if (value.toLowerCase().indexOf("lnurl") >= 0) {
+        navigate(`/wallet`, {
+          state: {lightningRequest: value}
+        });
       } else {
         const {
           lightningInvoice,
