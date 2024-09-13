@@ -16,22 +16,7 @@ export const useInitialClipboard = () => {
 
   const checkClipboard = useCallback(async () => {
     const clipboardData = await Clipboard.getString();
-    if(clipboardData.indexOf("@") >= 0){
-      const splitLnAddress = clipboardData.split("@");
-      const lightningRequest = `lnurlp://${splitLnAddress[1]}/.well-known/lnurlp/${splitLnAddress[0]}`;
-      const toastId = toast.show(t("foundLnAddrClipboard"), {
-        type: "info",
-        // @ts-ignore
-        icon: faFileInvoice,
-        duration: 10000,
-        onPress: () => {
-          toast.hide(toastId);
-          navigate(`/wallet`, {
-            state: {lightningRequest}
-          });
-        }
-      });
-    } else if (clipboardData.toLowerCase().indexOf("lnurl") >= 0) {
+    if (clipboardData.toLowerCase().indexOf("lnurl") >= 0 || clipboardData.indexOf("@") >= 0) {
       const toastId = toast.show(t("foundLnurlClipboard"), {
         type: "info",
         // @ts-ignore

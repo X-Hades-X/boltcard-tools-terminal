@@ -57,11 +57,11 @@
       "returnToHome": "Return to Home"
     },
     "wallet": {
-      "title": "Enter amount (SATs)",
+      "title": "Enter amount",
       "send": "Send",
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card.",
-      "tapYourBoltCardReceive": "Tap your Bolt Card to receive.",
+      "tapYourBoltCardReceive": "Tap your Bolt Card to receive %amount% sats.",
       "sendingPayment": "Sending payment",
       "loadingWallet": "Loading wallet",
       "received": "Received",

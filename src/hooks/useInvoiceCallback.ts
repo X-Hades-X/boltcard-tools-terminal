@@ -58,6 +58,11 @@ export const useInvoiceCallback = () => {
       setIsPaySuccess(false);
       setError(undefined);
 
+      if (lnurl.indexOf("@") >= 0) {
+        const splitLnAddress = lnurl.split("@");
+        lnurl = `lnurlp://${splitLnAddress[1]}/.well-known/lnurlp/${splitLnAddress[0]}`;
+      }
+
       const lightingPrefix = "lightning:";
       const lnurlwPrefix = "lnurlw://";
       const lnurlpPrefix = "lnurlp://";

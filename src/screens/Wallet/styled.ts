@@ -29,6 +29,14 @@ export const InfoText = styled(Text)`
   margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
 `;
 
+export const DescriptionText = styled(Text)`
+  color: ${({ theme }) => theme.colors.lightning};
+  text-align: left;
+  width: fit-content;
+  margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
+  height: 50px;  
+`;
+
 export const WalletButtonWrapper = styled(View)`
     display: flex;
     flex-direction: row;

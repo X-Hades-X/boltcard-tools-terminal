@@ -171,11 +171,7 @@ export const Wallet = () => {
 
   useEffect(() => {
     if (error) {
-      setLnurlp(undefined);
-      setLnurlw(undefined);
-      setPinRequired(false);
-      setWithdraw(undefined);
-      void setupNfc();
+      onReturnToHome();
     }
   }, [error]);
 
@@ -243,13 +239,18 @@ export const Wallet = () => {
             </View>
           </S.WalletButtonWrapper>
           {!pinRequired ? (
-            <PinPad onPinEntered={(value)=> {
-              if (value && value !== "") {
-                setAmount(parseInt(value));
-              } else if (value !== undefined){
-                setAmount(0);
-              }
-            }} pinMode={false}/>) : null}
+            <>
+              <S.DescriptionText>
+                {lightningRequest ? lightningRequest : lnurlw?.defaultDescription}
+              </S.DescriptionText>
+              <PinPad onPinEntered={(value)=> {
+                if (value && value !== "") {
+                  setAmount(parseInt(value));
+                } else if (value !== undefined){
+                  setAmount(0);
+                }
+              }} pinMode={false}/>
+            </>) : null}
         </S.WalletComponentStack>
       ) : null}
       {isPaySuccess ? (
@@ -277,7 +278,7 @@ export const Wallet = () => {
           <Loader
             reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw || lightningRequest) ?
               (isNfcScanning ? "tapYourBoltCardReceive" : (withdraw ? "sendingPayment" : "loadingWallet")) :
-              "tapYourBoltCard")}
+              "tapYourBoltCard").replace("%amount%", `${amount}`)}
           />
         </S.CenterComponentStack>
       ) : null}

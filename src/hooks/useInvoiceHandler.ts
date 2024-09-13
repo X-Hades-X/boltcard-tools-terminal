@@ -11,13 +11,7 @@ export const useInvoiceHandler = () => {
 
   const invoiceHandler = useCallback(
     (value: string) => {
-      if(value.indexOf("@") >= 0){
-        const splitLnAddress = value.split("@");
-        const lightningRequest = `lnurlp://${splitLnAddress[1]}/.well-known/lnurlp/${splitLnAddress[0]}`;
-        navigate(`/wallet`, {
-          state: {lightningRequest}
-        });
-      } else if (value.toLowerCase().indexOf("lnurl") >= 0) {
+      if (value.toLowerCase().indexOf("lnurl") >= 0 || value.indexOf("@") >= 0) {
         navigate(`/wallet`, {
           state: {lightningRequest: value}
         });
