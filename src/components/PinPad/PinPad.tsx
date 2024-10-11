@@ -14,9 +14,11 @@ type PinViewFunctions = {
 type PinPadProps = {
   onPinEntered: (pin: string) => void;
   pinMode: boolean;
+  floatAllowed?: boolean;
 }
 
 const LeftButton = () => <Icon icon={faDeleteLeft} size={36} color={"#FFF"} />;
+const RightButton = () => <S.CustomButtonStyle>.</S.CustomButtonStyle>;
 
 export const PinPad = (props: PinPadProps) => {
   const pinView = useRef<PinViewFunctions>(null);
@@ -41,8 +43,10 @@ export const PinPad = (props: PinPadProps) => {
   useEffect(() => {
       if (buttonPressed === "custom_left" && pinView.current) {
         pinView.current.clearAll()
+      } else if(buttonPressed === "custom_right" && props.floatAllowed) {
+        //TODO figure out how to enter decimal
       }
-  }, [buttonPressed]);
+  }, [buttonPressed, props, pinView]);
 
   const numPad = (
     <S.PinPadContainer>
@@ -55,7 +59,7 @@ export const PinPad = (props: PinPadProps) => {
         inputSize={32}
         // @ts-ignore
         ref={pinView}
-        pinLength={props.pinMode ? 4 : 12}
+        pinLength={props.pinMode ? 4 : 9}
         buttonSize={60}
         onValueChange={value => setEnteredPin(value)}
         buttonAreaStyle={{ marginTop: 24 }}
@@ -67,6 +71,8 @@ export const PinPad = (props: PinPadProps) => {
         onButtonPress={key => setButtonPressed(key)}
         // @ts-ignore
         customLeftButton={showRemoveButton ? <LeftButton /> : undefined}
+        // @ts-ignore
+        // customRightButton={props.floatAllowed ? <RightButton /> : undefined}
       />
     </S.PinPadContainer>
   );

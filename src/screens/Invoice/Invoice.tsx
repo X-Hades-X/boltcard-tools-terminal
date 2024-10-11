@@ -40,12 +40,16 @@ const numberWithSpaces = (nb: number) =>
 type InvoiceState = XOR<
   {
     lightningInvoice: string;
+    fiat?: string;
+    fiatAmount?: number;
   },
   {
     bitcoinAddress: string;
     amount: number;
     label?: string;
     message?: string;
+    fiat?: string;
+    fiatAmount?: number;
   }
 >;
 
@@ -76,7 +80,9 @@ export const Invoice = () => {
     bitcoinAddress,
     amount,
     label,
-    message
+    message,
+    fiat,
+    fiatAmount
   } = location.state || {};
 
   const [swapLightningInvoice, setSwapLightningInvoice] = useState<string>();
@@ -376,10 +382,19 @@ export const Invoice = () => {
                 valueColor={colors.lightning}
               />
             )}
+            {fiat && fiatAmount && (
+              <ListItem
+                title={t("fiatAmount")}
+                titleColor={colors.white}
+                icon={faBolt}
+                value={`${numberWithSpaces(fiatAmount)} ${fiat}`}
+                valueColor={colors.white}
+              />
+            )}
           </ComponentStack>
         )}
       </ComponentStack>
-      {isPaySuccess ? (
+      {isPaySuccess && satoshis ? (
         <S.SuccessComponentStack gapSize={32}>
           <S.SuccessLottie
             autoPlay
@@ -388,7 +403,7 @@ export const Invoice = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")} {satoshis} sats
+            {t("paid")} {fiat && fiatAmount ? `${numberWithSpaces(fiatAmount)} ${fiat}\n(${numberWithSpaces(satoshis)} SAT)` : `${numberWithSpaces(satoshis)} SAT`}
           </Text>
           <Button
             icon={faHome}

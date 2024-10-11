@@ -41,9 +41,6 @@ export const Home = () => {
           <S.IntroText h4 centered weight={600}>
             {t("intro")}
           </S.IntroText>
-          <S.IntroText h4 centered weight={600}>
-            {t("walletIntro")}
-          </S.IntroText>
         </ComponentStack>
         <S.MainComponentStack>
           <Button

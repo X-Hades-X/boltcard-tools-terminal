@@ -39,3 +39,16 @@ export const PinViewStyles = StyleSheet.create({
       backgroundColor: "transparent"
     },
 });
+
+export const CustomButtonStyle = styled(Text)`
+    text-align: center;
+    align-items: center;
+    background: transparent;
+    font-size: 22px;
+    font-weight: bold;
+    color: ${({ theme }) => theme.colors.white};
+    border: 1px solid ${({ theme }) => theme.colors.white};
+    border-radius: 30px;
+    height: 60px;
+    width: 60px;
+`

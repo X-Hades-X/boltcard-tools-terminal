@@ -5,7 +5,7 @@ import {
   Button,
   PageContainer,
   ComponentStack,
-  Lottie
+  Lottie, SelectField
 } from "@components";
 
 export const WalletPageContainer = styled(PageContainer).attrs(() => ({}))``;
@@ -19,7 +19,13 @@ export const AmountText = styled(Text)`
   color: ${({ theme }) => theme.colors.white};
   min-height: 72px;
   text-align: center;
-  margin: ${({ theme }) => `${theme.gridSize / 2}px ${theme.gridSize}px`};
+  margin: ${({ theme }) => `0px ${theme.gridSize / 2}px`};
+    flex: 1;
+`;
+
+export const SatAmountText = styled(Text)`
+  color: ${({ theme }) => theme.colors.white};
+  text-align: center;
 `;
 
 export const InfoText = styled(Text)`
@@ -40,6 +46,14 @@ export const DescriptionText = styled(Text)`
 export const WalletButtonWrapper = styled(View)`
     display: flex;
     flex-direction: row;
+`;
+
+export const WalletValueWrapper = styled(View)`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: end;
+    width: 100%;
 `;
 
 export const WalletButton = styled(Button)`
@@ -63,4 +77,14 @@ export const SuccessLottie = styled(Lottie)<{ size: number }>`
     width: ${size}px;
   `}
   transform: scale(1.35);
+`;
+
+export const SuccessText = styled(Text)`
+    color: ${({ theme }) => theme.colors.white};
+    font-weight: bold;
+    text-align: center;
+`;
+
+export const CurrencySelection = styled(SelectField)`
+  width: 65px;
 `;
