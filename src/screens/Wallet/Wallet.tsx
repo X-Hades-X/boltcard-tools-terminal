@@ -23,34 +23,7 @@ import AnimatedLinearGradient from "react-native-animated-linear-gradient";
 import { colors as gradiantColors } from "./gradient-config";
 import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
-
-const numberWithSpaces = (nb: number, float?: boolean) => {
-  if (float && nb) {
-    const intValue = Math.floor(nb).toString();
-    let withSpaces = intValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    const decimalValue = (nb + "").split(".")[1];
-    if (decimalValue !== undefined) {
-      withSpaces += "." + decimalValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    }
-    return withSpaces;
-  } else {
-    return nb.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  }
-};
-
-const numberWithSpacesFromString = (nb: string, float?: boolean) => {
-  if (float && nb) {
-    const intValue = Math.floor(parseFloat(nb)).toString();
-    let withSpaces = intValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    const decimalValue = (nb + "").split(".")[1];
-    if (decimalValue !== undefined) {
-      withSpaces += "." + decimalValue.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    }
-    return withSpaces;
-  } else {
-    return nb.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  }
-};
+import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
 
 type LightningRequest = {
   lightningRequest: string;
@@ -217,11 +190,11 @@ export const Wallet = () => {
       requestInvoice(lnurlp, satAmount).then(pr => {
         navigate(`/invoice`, {
           state: currentRate.label !== "SAT" ?
-            { lightningInvoice: pr, fiat: currentRate.label, fiatAmount: amount } : { lightningInvoice: pr }
+            { lightningInvoice: pr, fiat: currentRate.label, fiatAmount: numAmount } : { lightningInvoice: pr }
         });
       });
     }
-  }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, amount]);
+  }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, numAmount]);
 
   const onReturnToHome = useCallback(() => {
     navigate("/");
@@ -264,14 +237,14 @@ export const Wallet = () => {
             </S.TitleText>
             <S.WalletValueWrapper>
               <S.AmountText h1>
-                {numberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
+                {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
               </S.AmountText>
               <S.CurrencySelection showValue={true} value={currentRate.label} items={rateItems}
                                    onChange={(val) => onRateChange(`${val.nativeEvent.text}`)} />
             </S.WalletValueWrapper>
             {currentRate.label !== "SAT" ? (
               <S.SatAmountText h4>
-                {numberWithSpaces(satAmount)} Sat
+                {getNumberWithSpaces(satAmount)} Sat
               </S.SatAmountText>) : null}
             <S.WalletButtonWrapper>
               <View>
@@ -290,10 +263,10 @@ export const Wallet = () => {
                 {lnurlp && !pinRequired ? (
                   <View>
                     <S.InfoText>
-                      Min: {numberWithSpaces(lnurlp.minSendable / 1000)}
+                      Min: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
                     </S.InfoText>
                     <S.InfoText>
-                      Max: {numberWithSpaces(lnurlp.maxSendable / 1000)}
+                      Max: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
                     </S.InfoText>
                   </View>
                 ) : null}
@@ -315,10 +288,10 @@ export const Wallet = () => {
                 {lnurlw && !pinRequired ? (
                   <View>
                     <S.InfoText>
-                      PIN Limit: {lnurlw.pinLimit ? numberWithSpaces(lnurlw.pinLimit) : "-"}
+                      PIN Limit: {lnurlw.pinLimit ? getNumberWithSpaces(lnurlw.pinLimit) : "-"}
                     </S.InfoText>
                     <S.InfoText>
-                      Max: {numberWithSpaces(lnurlw.maxWithdrawable / 1000)}
+                      Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
                     </S.InfoText>
                   </View>
                 ) : null}
@@ -351,8 +324,8 @@ export const Wallet = () => {
             />
             <S.SuccessText h3>
               {t("received")} {currentRate.label !== "SAT" ?
-              numberWithSpaces(numAmount) :
-              numberWithSpaces(satAmount)} {currentRate.label}{currentRate.label !== "SAT" ? `\n(${numberWithSpaces(satAmount)} SAT)` : ""}
+              getNumberWithSpacesFromString(amount, true) :
+              getNumberWithSpaces(satAmount)} {currentRate.label}{currentRate.label !== "SAT" ? `\n(${getNumberWithSpaces(satAmount)} SAT)` : ""}
             </S.SuccessText>
             <Button
               icon={faHome}
@@ -362,15 +335,15 @@ export const Wallet = () => {
             />
           </S.CenterComponentStack>
         ) : pinRequired && !isNfcScanning ? (
-          <PinPad onPinEntered={onPin} pinMode={true} />
+          <PinPad onPinEntered={onPin} />
         ) : isNfcScanning || withdraw || lightningRequest ? (
           <S.CenterComponentStack>
             <Loader
               reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw || lightningRequest) ?
                 (isNfcScanning ? "tapYourBoltCardReceive" : (withdraw ? "sendingPayment" : "loadingWallet")) :
                 "tapYourBoltCard").replace("%amount%", `${currentRate.label !== "SAT" ?
-                numberWithSpaces(numAmount) :
-                numberWithSpaces(satAmount)} ${currentRate.label}${currentRate.label !== "SAT" ? `\n(${numberWithSpaces(satAmount)} SAT)` : ""}`)
+                getNumberWithSpacesFromString(amount, true) :
+                getNumberWithSpaces(satAmount)} ${currentRate.label}${currentRate.label !== "SAT" ? `\n(${getNumberWithSpaces(satAmount)} SAT)` : ""}`)
               }
             />
           </S.CenterComponentStack>

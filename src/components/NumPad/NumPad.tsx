@@ -6,7 +6,6 @@ import { ComponentStack, Pressable } from "@components";
 type NumPadProps = {
   value: string;
   onNumberEntered: (number: string) => void;
-  title?: string;
   showValue?: boolean;
   fixed?: number;
 }
@@ -50,14 +49,6 @@ export const NumPad = (props: NumPadProps) => {
   return (
     <>
       <ComponentStack>
-        {props.title ?
-          <S.NumPadTitle>
-            Test Title
-          </S.NumPadTitle> : null}
-        {props.title ?
-          <S.AmountText>
-            {value}
-          </S.AmountText> : null}
       <S.NumPadNumberContainer>
         <S.NumPadNumberRow>
           <S.NumPadButtonStyle

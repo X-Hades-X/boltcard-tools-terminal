@@ -3,16 +3,16 @@ import { View, Text } from "@components";
 import { StyleSheet } from "react-native";
 
 export const PinPadContainer = styled(View)`
-  backgroundColor: transparent;
-  alignItems: center;
+  background-color: transparent;
+  align-items: center;
   flex: 1;
 `;
 
 export const PinPadTitle = styled(Text)`
-  paddingTop: 48px;
-  paddingBottom: 24px;
+  padding-top: 48px;
+  padding-bottom: 24px;
   color: rgba(255,255,255,1);
-  fontSize: 48px;
+  font-size: 48px;
 `;
 
 export const BottomDrawerStyles = StyleSheet.create({
@@ -34,21 +34,4 @@ export const PinViewStyles = StyleSheet.create({
       borderColor: "#FFF",
       backgroundColor: "transparent"
     },
-    transparent: {
-      borderWidth: 0,
-      backgroundColor: "transparent"
-    },
 });
-
-export const CustomButtonStyle = styled(Text)`
-    text-align: center;
-    align-items: center;
-    background: transparent;
-    font-size: 22px;
-    font-weight: bold;
-    color: ${({ theme }) => theme.colors.white};
-    border: 1px solid ${({ theme }) => theme.colors.white};
-    border-radius: 30px;
-    height: 60px;
-    width: 60px;
-`

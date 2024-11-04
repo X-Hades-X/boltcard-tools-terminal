@@ -33,9 +33,7 @@ import { faBitcoin } from "@fortawesome/free-brands-svg-icons";
 import axios from "axios";
 import * as S from "./styled";
 import { LnurlWData } from "@hooks/useInvoiceCallback";
-
-const numberWithSpaces = (nb: number) =>
-  nb.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 
 type InvoiceState = XOR<
   {
@@ -363,14 +361,14 @@ export const Invoice = () => {
               <ListItem
                 title={t("amountReceived")}
                 icon={faMoneyBill}
-                value={`${numberWithSpaces(amount)} sats`}
+                value={`${getNumberWithSpaces(amount)} sats`}
               />
             )}
             {swapFees && (
               <ListItem
                 title={t("fees")}
                 icon={faPercentage}
-                value={`${numberWithSpaces(swapFees)} sats`}
+                value={`${getNumberWithSpaces(swapFees)} sats`}
               />
             )}
             {satoshis && (
@@ -378,7 +376,7 @@ export const Invoice = () => {
                 title={t("invoiceAmount")}
                 titleColor={colors.lightning}
                 icon={faBolt}
-                value={`${numberWithSpaces(satoshis)} sats`}
+                value={`${getNumberWithSpaces(satoshis)} sats`}
                 valueColor={colors.lightning}
               />
             )}
@@ -387,7 +385,7 @@ export const Invoice = () => {
                 title={t("fiatAmount")}
                 titleColor={colors.white}
                 icon={faBolt}
-                value={`${numberWithSpaces(fiatAmount)} ${fiat}`}
+                value={`${getNumberWithSpaces(fiatAmount, true)} ${fiat}`}
                 valueColor={colors.white}
               />
             )}
@@ -403,7 +401,7 @@ export const Invoice = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")} {fiat && fiatAmount ? `${numberWithSpaces(fiatAmount)} ${fiat}\n(${numberWithSpaces(satoshis)} SAT)` : `${numberWithSpaces(satoshis)} SAT`}
+            {t("paid")} {fiat && fiatAmount ? `${getNumberWithSpaces(fiatAmount, true)} ${fiat}\n(${getNumberWithSpaces(satoshis)} SAT)` : `${getNumberWithSpaces(satoshis)} SAT`}
           </Text>
           <Button
             icon={faHome}
@@ -413,7 +411,7 @@ export const Invoice = () => {
           />
         </S.SuccessComponentStack>
       ) : pinRequired && !pinConfirmed ? (
-            <PinPad pinMode={true} onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
+            <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
       ) : (
         <Loader
           reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}

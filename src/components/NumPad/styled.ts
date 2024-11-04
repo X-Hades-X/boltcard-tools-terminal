@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { View, Text, ComponentStack, Icon, Button } from "@components";
+import { View, ComponentStack, Icon, Button } from "@components";
 
 export const NumPadNumberContainer = styled(ComponentStack)`
     display: flex;
@@ -30,18 +30,3 @@ export const EmptySpace = styled(View)`
 export const NumPadIconStyle = styled(Icon)`
     margin: 6px;
 `
-
-export const NumPadTitle = styled(Text)`
-  color: rgba(255,255,255,1);
-  font-size: 48px;
-    height: 80px;
-`;
-
-export const AmountText = styled(Text)`
-  color: ${({ theme }) => theme.colors.white};
-  text-align: center;
-  margin: ${({ theme }) => `0px ${theme.gridSize / 2}px`};
-    flex: 1;
-    font-size: 48px;
-    height: 80px;
-`;
