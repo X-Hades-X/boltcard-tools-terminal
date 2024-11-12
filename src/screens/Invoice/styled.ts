@@ -47,3 +47,13 @@ export const SuccessLottie = styled(Lottie)<{ size: number }>`
   `}
   transform: scale(1.35);
 `;
+
+export const QrCodeComponentStack = styled(ComponentStack)`
+     padding: ${({ theme }) => `${theme.gridSize / 2}px ${theme.gridSize / 2}px`};
+    align-items: center;
+`;
+
+export const QrCodeText = styled(Text)`
+    color: ${({ theme }) => theme.colors.white};
+    text-align: center;
+`;

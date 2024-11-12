@@ -26,7 +26,7 @@ import { useNfc, useInvoiceCallback } from "@hooks";
 import { XOR } from "ts-essentials";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Vibration } from "react-native";
+import { Dimensions, Vibration } from "react-native";
 import { useTheme } from "styled-components";
 import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faBitcoin } from "@fortawesome/free-brands-svg-icons";
@@ -34,6 +34,7 @@ import axios from "axios";
 import * as S from "./styled";
 import { LnurlWData } from "@hooks/useInvoiceCallback";
 import { getNumberWithSpaces } from "@utils/numberWithSpaces";
+import QRCode from "react-native-qrcode-svg";
 
 type InvoiceState = XOR<
   {
@@ -50,6 +51,8 @@ type InvoiceState = XOR<
     fiatAmount?: number;
   }
 >;
+
+const windowWidth = Dimensions.get('window').width;
 
 export const Invoice = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.invoice" });
@@ -412,11 +415,24 @@ export const Invoice = () => {
         </S.SuccessComponentStack>
       ) : pinRequired && !pinConfirmed ? (
             <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
-      ) : (
-        <Loader
-          reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}
-        />
-      )}
+      ) : (lightningInvoice || swapLightningInvoice) ? (
+        <S.QrCodeComponentStack>
+          <Loader
+            reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}
+          />
+          <S.QrCodeText h4 weight={700}>
+            {t("scanInvoice")}
+          </S.QrCodeText>
+          <QRCode
+            size={windowWidth}
+            quietZone={25}
+            value={lightningInvoice ? lightningInvoice : swapLightningInvoice}
+          />
+          <S.QrCodeText h4 weight={700}>
+            {t("scanInvoiceHint")}
+          </S.QrCodeText>
+        </S.QrCodeComponentStack>
+      ):""}
     </S.InvoicePageContainer>
   );
 };

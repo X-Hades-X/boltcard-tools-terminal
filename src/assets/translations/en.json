@@ -40,6 +40,8 @@
     },
     "invoice": {
       "tapYourBoltCard": "Tap your Bolt Card",
+      "scanInvoice": "or scan invoice",
+      "scanInvoiceHint": "Scanning the invoice and paying with another device will not be confirmed here.",
       "network": "Network",
       "label": "Label",
       "message": "Message",
