@@ -32,15 +32,18 @@ import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faBitcoin } from "@fortawesome/free-brands-svg-icons";
 import axios from "axios";
 import * as S from "./styled";
-import { LnurlWData } from "@hooks/useInvoiceCallback";
+import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 import QRCode from "react-native-qrcode-svg";
 
 type InvoiceState = XOR<
   {
-    lightningInvoice: string;
+    lightningInvoice?: string;
     fiat?: string;
     fiatAmount?: number;
+    withdrawInvoice?: LnurlWData;
+    withdrawAmount?: number;
+    withdrawPin?: string;
   },
   {
     bitcoinAddress: string;
@@ -52,7 +55,7 @@ type InvoiceState = XOR<
   }
 >;
 
-const windowWidth = Dimensions.get('window').width;
+const windowWidth = Dimensions.get("window").width;
 
 export const Invoice = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.invoice" });
@@ -67,10 +70,11 @@ export const Invoice = () => {
     stopNfc,
     isNfcAvailable,
     isNfcScanning,
-    isNfcNeedsTap,
+    isNfcNeedsTap
   } = useNfc();
   const {
     callLnurl,
+    requestInvoice,
     payInvoice,
     isPaySuccess,
     error
@@ -78,6 +82,9 @@ export const Invoice = () => {
 
   const {
     lightningInvoice: stateLightningInvoice,
+    withdrawInvoice: stateWithdrawInvoice,
+    withdrawAmount,
+    withdrawPin,
     bitcoinAddress,
     amount,
     label,
@@ -93,6 +100,11 @@ export const Invoice = () => {
     [stateLightningInvoice, swapLightningInvoice]
   );
 
+  const withdrawInvoice = useMemo(
+    () => stateWithdrawInvoice,
+    [stateWithdrawInvoice]
+  );
+
   const [isScheduledSwap, setIsScheduledSwap] = useState(false);
   const [isSwapLoading, setIsSwapLoading] = useState<boolean>();
   const [swapFees, setSwapFees] = useState<number>();
@@ -103,6 +115,7 @@ export const Invoice = () => {
   const [pinRequiredChecked, setPinRequiredChecked] = useState<boolean>(false);
   const [pinRequired, setPinRequired] = useState<boolean>(false);
   const [lnurlw, setLnurlw] = useState<LnurlWData>();
+  const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
   const { satoshis } = decodedInvoice || {};
 
@@ -118,7 +131,7 @@ export const Invoice = () => {
 
   // Read NFC Message
   useEffect(() => {
-    if (isNfcAvailable && !isNfcNeedsTap && lightningInvoice) {
+    if (isNfcAvailable && !isNfcNeedsTap && (lightningInvoice || withdrawInvoice)) {
       void readingNfcLoop();
     }
   }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap, lightningInvoice]);
@@ -128,89 +141,60 @@ export const Invoice = () => {
     if (nfcMessage) {
       setPinRequiredChecked(false);
       callLnurl(nfcMessage).then(response => {
-        if(response && response.tag === 'withdrawRequest') {
-          setLnurlw(response);
+        if (response) {
+          if (response.tag === "withdrawRequest") {
+            if (!withdrawInvoice) {
+              setLnurlw(response);
+            }
+
+            if (!lnurlp && response.payLink) {
+              callLnurl(response.payLink).then(payResponse => {
+                if (payResponse && payResponse.tag === "payRequest") {
+                  setLnurlp(payResponse);
+                }
+              });
+            }
+          } else if (response.tag === "payRequest") {
+            setLnurlp(response);
+          }
         }
       });
     }
   }, [nfcMessage]);
+
+  useEffect(() => {
+    if (withdrawInvoice && lnurlp && withdrawAmount && !isNfcScanning) {
+      requestInvoice(lnurlp, withdrawAmount).then(pr => {
+        setLnurlp(undefined);
+        if (pr) {
+          void payInvoice(withdrawInvoice.callback, withdrawInvoice.k1, pr, withdrawPin);
+        }
+      });
+    }
+  }, [lnurlp, withdrawInvoice, withdrawAmount, isNfcScanning, withdrawPin]);
 
   // Check if PIN is needed
   useEffect(() => {
     if (!error && !isPaySuccess && !pinRequiredChecked && satoshis) {
       if (lnurlw) {
         if (lnurlw.pinLimit !== undefined) {
-            //if the card has pin enabled
-            //check the amount didn't exceed the limit
-            const limitSat = lnurlw.pinLimit;
-            if (limitSat <= satoshis) {
-              setPinRequired(true);
-            }
+          //if the card has pin enabled
+          //check the amount didn't exceed the limit
+          const limitSat = lnurlw.pinLimit;
+          if (limitSat <= satoshis) {
+            setPinRequired(true);
+          }
         } else {
           setPinRequired(false);
         }
         setPinRequiredChecked(true);
-      } else {
-        // TODO copied from useNfc during refactor; probably going somewhere else
-        // const { data: cardRequest } = await axios.get<{ payLink?: string }>(
-        //   lnHttpsRequest
-        // );
-        // if (!cardRequest.payLink) throw getError("Invalid tag. No payLink");
-        // let finalUrl = cardRequest.payLink;
-        // if (finalUrl.startsWith("lnurlp://")) {
-        //   finalUrl = finalUrl.replace("lnurlp", "https");
-        // }
-        // const { data: finalUrlRequest } = await axios.get<{
-        //   tag?: string;
-        //   callback?: string;
-        //   minSendable?: number;
-        //   maxSendable?: number;
-        //   commentAllowed?: number;
-        // }>(finalUrl);
-        // if (finalUrlRequest.tag !== "payRequest")
-        //   throw getError("Invalid tag. tag is not payRequest");
-        // if (!finalUrlRequest.callback)
-        //   throw getError("Invalid tag. No callback");
-        // if (
-        //   !finalUrlRequest.minSendable ||
-        //   finalUrlRequest.minSendable / 1000 > amount
-        // )
-        //   throw getError("Invalid tag. minSendable undefined or too high");
-        // if (
-        //   !finalUrlRequest.maxSendable ||
-        //   finalUrlRequest.maxSendable / 1000 < amount
-        // )
-        //   throw getError("Invalid tag. maxSendable undefined or too low");
-        // const fullTitle = `${title || ""}${
-        //   description ? `- ${description}` : ""
-        // }`;
-        // const { data: callbackRequest } = await axios.get<{ pr?: string }>(
-        //   `${finalUrlRequest.callback}?amount=${(amount || 0) * 1000}${
-        //     (finalUrlRequest.commentAllowed || 0) >= fullTitle.length
-        //       ? `&comment=${fullTitle}`
-        //       : ""
-        //   }`
-        // );
-        // if (!callbackRequest.pr) throw getError("Invalid tag. No pr defined");
-        // const { data: withdrawCallbackRequest } = await axios.get<{
-        //   status?: string;
-        // }>(withdrawCallbackData.callback, {
-        //   params: {
-        //     pr: callbackRequest.pr,
-        //     k1: withdrawCallbackData.k1
-        //   }
-        // });
-        // if (withdrawCallbackRequest.status !== "OK")
-        //   throw getError("Impossible to top-up card.");
-        // setIsPaid(true);
-        // debitCardData = withdrawCallbackRequest;
       }
     }
   }, [lightningInvoice, lnurlw, satoshis, isPaySuccess]);
 
   // Pay invoice after pin requirement is checked and if needed entered by the user
   useEffect(() => {
-    if(!error && lightningInvoice && lnurlw && lnurlw.k1 && pinRequiredChecked && (pin || !pinRequired)){
+    if (!error && lightningInvoice && lnurlw && lnurlw.k1 && pinRequiredChecked && (pin || !pinRequired)) {
       void payInvoice(lnurlw.callback, lnurlw.k1, lightningInvoice, pin);
     }
   }, [lightningInvoice, lnurlw, pin, pinRequiredChecked, pinRequired]);
@@ -250,7 +234,9 @@ export const Invoice = () => {
         }>(data.callback, { params: { amount: data.minSendable } });
         setSwapLightningInvoice(callbackData.pr);
         setSwapFees(data.minSendable / 1000 - amount);
-      } catch (e) {}
+      } catch (e) {
+        // TODO handle error
+      }
       setIsSwapLoading(false);
     }
   }, [amount, bitcoinAddress, isScheduledSwap]);
@@ -273,17 +259,17 @@ export const Invoice = () => {
   return (
     <S.InvoicePageContainer
       {...(!isPaySuccess
-        ? !decodedInvoice
+        ? !(decodedInvoice || withdrawInvoice)
           ? {
-              footerButton: {
-                type: "bitcoin",
-                title: t("requestSwap"),
-                onPress: onGetSwapQuote,
-                isLoading: isSwapLoading
-              }
+            footerButton: {
+              type: "bitcoin",
+              title: t("requestSwap"),
+              onPress: onGetSwapQuote,
+              isLoading: isSwapLoading
             }
+          }
           : isNfcNeedsTap && lightningInvoice
-          ? {
+            ? {
               footerButton: {
                 type: "bitcoin",
                 title: t("startScanning"),
@@ -292,7 +278,7 @@ export const Invoice = () => {
                 }
               }
             }
-          : {}
+            : {}
         : {})}
       isContentVerticallyCentered={isPaySuccess}
     >
@@ -303,13 +289,13 @@ export const Invoice = () => {
               title={t("network")}
               icon={faNetworkWired}
               valuePrefixIcon={
-                stateLightningInvoice
+                stateLightningInvoice || withdrawInvoice
                   ? { icon: faBolt, color: colors.lightning }
                   : { icon: faBitcoin, color: colors.bitcoin }
               }
-              value={stateLightningInvoice ? "Lightning" : "Onchain"}
+              value={stateLightningInvoice ? "Lightning" : withdrawInvoice ? "Lightning Top-Up" : "Onchain"}
               valueColor={
-                stateLightningInvoice ? colors.lightning : colors.bitcoin
+                stateLightningInvoice || withdrawInvoice ? colors.lightning : colors.bitcoin
               }
             />
             {finalLabel && (
@@ -323,14 +309,14 @@ export const Invoice = () => {
               />
             )}
 
-            {!stateLightningInvoice && (
+            {!(stateLightningInvoice || withdrawInvoice) && (
               <S.ListItemWrapper>
                 <Text h4 weight={600} color={colors.greyLight}>
                   {t("scheduledSwapIntro")}
                 </Text>
               </S.ListItemWrapper>
             )}
-            {!stateLightningInvoice && (
+            {!(stateLightningInvoice || withdrawInvoice) && (
               <ListItem
                 title={t("nextBatch")}
                 icon={faClock}
@@ -346,7 +332,7 @@ export const Invoice = () => {
                 )}
               />
             )}
-            {!stateLightningInvoice && (
+            {!(stateLightningInvoice || withdrawInvoice) && (
               <S.ListItemWrapper>
                 <CheckboxField
                   label={t("scheduleForNextBatch")}
@@ -383,6 +369,15 @@ export const Invoice = () => {
                 valueColor={colors.lightning}
               />
             )}
+            {withdrawAmount && (
+              <ListItem
+                title={t("withdrawAmount")}
+                titleColor={colors.lightning}
+                icon={faBolt}
+                value={`${getNumberWithSpaces(withdrawAmount)} sats`}
+                valueColor={colors.lightning}
+              />
+            )}
             {fiat && fiatAmount && (
               <ListItem
                 title={t("fiatAmount")}
@@ -395,7 +390,7 @@ export const Invoice = () => {
           </ComponentStack>
         )}
       </ComponentStack>
-      {isPaySuccess && satoshis ? (
+      {isPaySuccess && (satoshis || withdrawAmount) ? (
         <S.SuccessComponentStack gapSize={32}>
           <S.SuccessLottie
             autoPlay
@@ -404,7 +399,9 @@ export const Invoice = () => {
             size={180}
           />
           <Text h3 color={colors.white} weight={700}>
-            {t("paid")} {fiat && fiatAmount ? `${getNumberWithSpaces(fiatAmount, true)} ${fiat}\n(${getNumberWithSpaces(satoshis)} SAT)` : `${getNumberWithSpaces(satoshis)} SAT`}
+            {withdrawInvoice ? t("received") : t("paid")} {fiat && fiatAmount ?
+            `${getNumberWithSpaces(fiatAmount, true)} ${fiat}\n(${satoshis ? getNumberWithSpaces(satoshis) : withdrawAmount ? getNumberWithSpaces(withdrawAmount) : 0} SAT)` :
+            `${satoshis ? getNumberWithSpaces(satoshis) : withdrawAmount ? getNumberWithSpaces(withdrawAmount) : 0} SAT`}
           </Text>
           <Button
             icon={faHome}
@@ -414,25 +411,31 @@ export const Invoice = () => {
           />
         </S.SuccessComponentStack>
       ) : pinRequired && !pinConfirmed ? (
-            <PinPad onPinEntered={(value) => {setPin(value); setPinConfirmed(true)}}/>
-      ) : (lightningInvoice || swapLightningInvoice) ? (
+        <PinPad onPinEntered={(value) => {
+          setPin(value);
+          setPinConfirmed(true);
+        }} />
+      ) : (lightningInvoice || swapLightningInvoice || withdrawInvoice) ? (
         <S.QrCodeComponentStack>
           <Loader
-            reason={t(!isNfcScanning ? "payingInvoice" : "tapYourBoltCard")}
+            reason={t(!isNfcScanning ? "payingInvoice" : (withdrawInvoice ? "topupCard" : "tapYourBoltCard"))}
           />
-          <S.QrCodeText h4 weight={700}>
-            {t("scanInvoice")}
-          </S.QrCodeText>
-          <QRCode
-            size={windowWidth}
-            quietZone={25}
-            value={lightningInvoice ? lightningInvoice : swapLightningInvoice}
-          />
-          <S.QrCodeText h4 weight={700}>
-            {t("scanInvoiceHint")}
-          </S.QrCodeText>
+          {(lightningInvoice || swapLightningInvoice) && (
+            <S.QrCodeComponentStack>
+              <S.QrCodeText h4 weight={700}>
+                {t("scanInvoice")}
+              </S.QrCodeText>
+              <QRCode
+                size={windowWidth}
+                quietZone={25}
+                value={lightningInvoice ? lightningInvoice : swapLightningInvoice}
+              />
+              <S.QrCodeText h4 weight={700}>
+                {t("scanInvoiceHint")}
+              </S.QrCodeText>
+            </S.QrCodeComponentStack>)}
         </S.QrCodeComponentStack>
-      ):""}
+      ) : ""}
     </S.InvoicePageContainer>
   );
 };

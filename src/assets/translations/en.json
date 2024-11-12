@@ -39,13 +39,14 @@
       "foundLnurlClipboard": "Tap to load LNURL from your clipboard"
     },
     "invoice": {
-      "tapYourBoltCard": "Tap your Bolt Card",
+      "tapYourBoltCard": "Tap your Bolt Card to pay",
       "scanInvoice": "or scan invoice",
-      "scanInvoiceHint": "Scanning the invoice and paying with another device will not be confirmed here.",
+      "scanInvoiceHint": "Scanning the invoice with another device will not be confirmed here.",
       "network": "Network",
       "label": "Label",
       "message": "Message",
       "invoiceAmount": "Invoice amount",
+      "withdrawAmount": "Top-Up amount",
       "fiatAmount": "Fiat amount",
       "fees": "Fees",
       "requestSwap": "Request swap",
@@ -56,7 +57,9 @@
       "scheduleForNextBatch": "Schedule for next batch",
       "startScanning": "Start scanning",
       "payingInvoice": "Paying invoice",
+      "topupCard": "Tap your Bold Card to receive",
       "paid": "Paid",
+      "received": "Received",
       "returnToHome": "Return to Home"
     },
     "wallet": {
@@ -64,11 +67,7 @@
       "send": "Send",
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card.",
-      "tapYourBoltCardReceive": "Tap your Bolt Card to receive %amount%",
-      "sendingPayment": "Sending payment",
-      "loadingWallet": "Loading wallet",
-      "received": "Received",
-      "returnToHome": "Return to Home"
+      "loadingWallet": "Loading wallet"
     }
   },
   "errors": {

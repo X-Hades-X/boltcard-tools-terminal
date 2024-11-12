@@ -51,8 +51,6 @@ export const Wallet = () => {
   const {
     callLnurl,
     requestInvoice,
-    payInvoice,
-    isPaySuccess,
     error
   } = useInvoiceCallback();
 
@@ -67,7 +65,6 @@ export const Wallet = () => {
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
   const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
-  const [payingInvoice, setPayingInvoice] = useState<boolean>(false);
 
   const rates = useRates();
   const [rateItems, setRateItems] = useState<ItemProps[]>([]);
@@ -80,7 +77,7 @@ export const Wallet = () => {
 
   useEffect(() => {
     setBackgroundColor(colors.primary, 0);
-    if(bitcoinAddress) {
+    if (bitcoinAddress) {
       setLoadingWallet(false);
     } else if (!lightningRequest) {
       void setupNfc();
@@ -90,8 +87,8 @@ export const Wallet = () => {
   // Read NFC Message
   useEffect(() => {
     if (isNfcAvailable && !isNfcNeedsTap) {
-      setLoadingWallet(true);
       void readingNfcLoop();
+      setLoadingWallet(false);
     }
   }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap]);
 
@@ -120,20 +117,21 @@ export const Wallet = () => {
     }
   }, [nfcMessage]);
 
-  // Get LNURLw and LNURLp
   useEffect(() => {
-    if (withdraw && lnurlp && satAmount && !isNfcScanning) {
-      requestInvoice(lnurlp, satAmount).then(pr => {
-        setLnurlp(undefined);
-        if (pr) {
-          void payInvoice(withdraw.callback, withdraw.k1, pr, pin).then(() => {
-            setWithdraw(undefined);
-            setPayingInvoice(false);
-          });
-        }
+    if (withdraw && satAmount) {
+      navigate(`/invoice`, {
+        state: currentRate.label !== "SAT" ?
+          {
+            withdrawInvoice: withdraw,
+            fiat: currentRate.label,
+            fiatAmount: numAmount,
+            withdrawAmount: satAmount,
+            withdrawPin: pin
+          } :
+          { withdrawInvoice: withdraw, withdrawAmount: satAmount, withdrawPin: pin }
       });
     }
-  }, [lnurlw, lnurlp, withdraw, satAmount, isNfcScanning]);
+  }, [withdraw, satAmount, numAmount, currentRate, pin]);
 
   useEffect(() => {
     if (rates !== undefined) {
@@ -168,30 +166,19 @@ export const Wallet = () => {
       const isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit <= satAmount : false;
       setPinRequired(isPinRequired);
       if (!isPinRequired) {
-        setPayingInvoice(true);
         setWithdraw(lnurlw);
-        setLnurlw(undefined);
-        setLnurlp(undefined);
-        void setupNfc();
       }
     }
-  }, [setupNfc, lnurlw, satAmount]);
+  }, [lnurlw, satAmount]);
 
   const onPin = useCallback((input: string) => {
     setPin(input);
-    setPinRequired(false);
-
-    setPayingInvoice(true);
     setWithdraw(lnurlw);
-    setLnurlw(undefined);
-    setLnurlp(undefined);
-
-    void setupNfc();
-  }, [setupNfc, lnurlw]);
+  }, [lnurlw]);
 
   const onReceive = useCallback(() => {
     if (satAmount) {
-      if(lnurlp) {
+      if (lnurlp) {
         requestInvoice(lnurlp, satAmount).then(pr => {
           navigate(`/invoice`, {
             state: currentRate.label !== "SAT" ?
@@ -200,29 +187,18 @@ export const Wallet = () => {
         });
       } else if (bitcoinAddress) {
         navigate(`/invoice`, {
-          state: {bitcoinAddress, amount: numAmount}
+          state: { bitcoinAddress, amount: satAmount }
         });
       }
     }
   }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, numAmount, bitcoinAddress]);
 
-  const onReturnToHome = useCallback(() => {
-    navigate("/");
-    setBackgroundColor(colors.primary, 0);
-  }, [colors.primary, navigate, setBackgroundColor]);
-
-  useEffect(() => {
-    if (isPaySuccess) {
-      Vibration.vibrate(50);
-      setBackgroundColor(colors.success, 500);
-    }
-  }, [isPaySuccess]);
-
   useEffect(() => {
     if (error) {
-      onReturnToHome();
+      navigate("/");
+      setBackgroundColor(colors.primary, 0);
     }
-  }, [error]);
+  }, [error, colors.primary, navigate, setBackgroundColor]);
 
   useEffect(() => {
     if (amount && (amount !== "" || amount.indexOf(".") === amount.length - 1)) {
@@ -238,9 +214,9 @@ export const Wallet = () => {
 
   return (
     <>
-      {(loadingWallet || payingInvoice) && <AnimatedLinearGradient customColors={gradiantColors} speed={6000} />}
+      {(isNfcScanning || loadingWallet) && <AnimatedLinearGradient customColors={gradiantColors} speed={6000} />}
       <S.WalletPageContainer>
-        {!isPaySuccess && !isNfcScanning && !loadingWallet && !payingInvoice ? (
+        {!(isNfcScanning || loadingWallet) && (lnurlw || lnurlp || bitcoinAddress) ? (
           <S.WalletComponentStack>
             <S.TitleText h2>
               {t("title")}
@@ -266,9 +242,9 @@ export const Wallet = () => {
                   disabled={
                     !satAmount ||
                     ((!lnurlp ||
-                    lnurlp.minSendable / 1000 > satAmount ||
-                    lnurlp.maxSendable / 1000 < satAmount) &&
-                    !bitcoinAddress)
+                        lnurlp.minSendable / 1000 > satAmount ||
+                        lnurlp.maxSendable / 1000 < satAmount) &&
+                      !bitcoinAddress)
                   }
                 />
                 {lnurlp && !pinRequired ? (
@@ -316,48 +292,26 @@ export const Wallet = () => {
                 <NumPad
                   value={amount}
                   onNumberEntered={(value) => {
-                  if (value) {
-                    setAmount(value);
-                  } else {
-                    setAmount("");
-                  }
-                }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
+                    if (value) {
+                      setAmount(value);
+                    } else {
+                      setAmount("");
+                    }
+                  }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
               </>) : null}
           </S.WalletComponentStack>
-        ) : null}
-        {isPaySuccess ? (
-          <S.CenterComponentStack gapSize={32}>
-            <S.SuccessLottie
-              autoPlay
-              loop={false}
-              source={require("@assets/animations/success.json")}
-              size={180}
-            />
-            <S.SuccessText h3>
-              {t("received")} {currentRate.label !== "SAT" ?
-              getNumberWithSpacesFromString(amount, true) :
-              getNumberWithSpaces(satAmount)} {currentRate.label}{currentRate.label !== "SAT" ? `\n(${getNumberWithSpaces(satAmount)} SAT)` : ""}
-            </S.SuccessText>
-            <Button
-              icon={faHome}
-              size="large"
-              title={t("returnToHome")}
-              onPress={onReturnToHome}
-            />
-          </S.CenterComponentStack>
-        ) : pinRequired && !isNfcScanning ? (
-          <PinPad onPinEntered={onPin} />
-        ) : isNfcScanning || withdraw || lightningRequest ? (
+        ) : (
           <S.CenterComponentStack>
             <Loader
-              reason={t(!isPaySuccess && (lnurlw || lnurlp || withdraw || lightningRequest) ?
-                (isNfcScanning ? "tapYourBoltCardReceive" : (withdraw ? "sendingPayment" : "loadingWallet")) :
-                "tapYourBoltCard").replace("%amount%", `${currentRate.label !== "SAT" ?
-                getNumberWithSpacesFromString(amount, true) :
-                getNumberWithSpaces(satAmount)} ${currentRate.label}${currentRate.label !== "SAT" ? `\n(${getNumberWithSpaces(satAmount)} SAT)` : ""}`)
+              reason={t(loadingWallet ?
+                "loadingWallet" :
+                "tapYourBoltCard")
               }
             />
           </S.CenterComponentStack>
+        )}
+        {pinRequired && !isNfcScanning ? (
+          <PinPad onPinEntered={onPin} />
         ) : null}
       </S.WalletPageContainer>
     </>
