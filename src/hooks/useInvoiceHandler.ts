@@ -26,13 +26,19 @@ export const useInvoiceHandler = () => {
         } = getBitcoinInvoiceData(value);
 
         if (isValid) {
-          navigate(`/invoice`, {
-            state: {
-              ...(lightningInvoice
-                ? { lightningInvoice }
-                : { bitcoinAddress, amount, label, message })
-            }
-          });
+          if(bitcoinAddress && !amount) {
+            navigate(`/wallet`, {
+              state: {bitcoinAddress: bitcoinAddress}
+            });
+          } else {
+            navigate(`/invoice`, {
+              state: {
+                ...(lightningInvoice
+                  ? { lightningInvoice }
+                  : { bitcoinAddress, amount, label, message })
+              }
+            });
+          }
         } else {
           toast.show(t("errors.invalidInvoice"), { type: "error" });
         }

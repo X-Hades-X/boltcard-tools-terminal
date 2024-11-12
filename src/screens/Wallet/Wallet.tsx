@@ -25,8 +25,9 @@ import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
 
-type LightningRequest = {
-  lightningRequest: string;
+type WalletRequest = {
+  lightningRequest?: string;
+  bitcoinAddress?: string;
 };
 
 const COIN = 100000000;
@@ -35,7 +36,7 @@ const coinCurrency = { label: "BTC", value: COIN };
 
 export const Wallet = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.wallet" });
-  const location = useLocation<LightningRequest>();
+  const location = useLocation<WalletRequest>();
   const navigate = useNavigate();
   const { setBackgroundColor } = useContext(ThemeContext);
   const { colors } = useTheme();
@@ -73,12 +74,15 @@ export const Wallet = () => {
   const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
   const {
-    lightningRequest
+    lightningRequest,
+    bitcoinAddress
   } = location.state || {};
 
   useEffect(() => {
     setBackgroundColor(colors.primary, 0);
-    if (!lightningRequest) {
+    if(bitcoinAddress) {
+      setLoadingWallet(false);
+    } else if (!lightningRequest) {
       void setupNfc();
     }
   }, [lightningRequest]);
@@ -93,9 +97,9 @@ export const Wallet = () => {
 
   // Fetch data from the URL in the NFC Message
   useEffect(() => {
-    setLoadingWallet(true);
     const request = nfcMessage ? nfcMessage : lightningRequest;
     if (request) {
+      setLoadingWallet(true);
       callLnurl(request).then(response => {
         if (response) {
           setLoadingWallet(false);
@@ -186,15 +190,21 @@ export const Wallet = () => {
   }, [setupNfc, lnurlw]);
 
   const onReceive = useCallback(() => {
-    if (lnurlp && satAmount) {
-      requestInvoice(lnurlp, satAmount).then(pr => {
-        navigate(`/invoice`, {
-          state: currentRate.label !== "SAT" ?
-            { lightningInvoice: pr, fiat: currentRate.label, fiatAmount: numAmount } : { lightningInvoice: pr }
+    if (satAmount) {
+      if(lnurlp) {
+        requestInvoice(lnurlp, satAmount).then(pr => {
+          navigate(`/invoice`, {
+            state: currentRate.label !== "SAT" ?
+              { lightningInvoice: pr, fiat: currentRate.label, fiatAmount: numAmount } : { lightningInvoice: pr }
+          });
         });
-      });
+      } else if (bitcoinAddress) {
+        navigate(`/invoice`, {
+          state: {bitcoinAddress, amount: numAmount}
+        });
+      }
     }
-  }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, numAmount]);
+  }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, numAmount, bitcoinAddress]);
 
   const onReturnToHome = useCallback(() => {
     navigate("/");
@@ -255,9 +265,10 @@ export const Wallet = () => {
                   onPress={onReceive}
                   disabled={
                     !satAmount ||
-                    !lnurlp ||
+                    ((!lnurlp ||
                     lnurlp.minSendable / 1000 > satAmount ||
-                    lnurlp.maxSendable / 1000 < satAmount
+                    lnurlp.maxSendable / 1000 < satAmount) &&
+                    !bitcoinAddress)
                   }
                 />
                 {lnurlp && !pinRequired ? (
@@ -300,7 +311,7 @@ export const Wallet = () => {
             {!pinRequired ? (
               <>
                 <S.DescriptionText>
-                  {lightningRequest ? lightningRequest : lnurlw?.defaultDescription}
+                  {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
                 </S.DescriptionText>
                 <NumPad
                   value={amount}

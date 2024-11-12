@@ -1,5 +1,6 @@
 import qs from "query-string";
 import { validateBitcoinAddress } from "./validateBitcoinAddress";
+import { AddressType } from "bitcoin-address-validation";
 
 type InvoiceType = {
   bitcoin?: string;
@@ -18,6 +19,8 @@ export const getBitcoinInvoiceData = (value: string) => {
 
   if (value.toLowerCase().startsWith("lnbc")) {
     lightningInvoice = value.toLowerCase();
+  } else if (validateBitcoinAddress(value.toLowerCase() || "")) {
+    bitcoinAddress = value.toLowerCase();
   } else {
     const parsedValue = qs.parse(
       value
@@ -37,7 +40,7 @@ export const getBitcoinInvoiceData = (value: string) => {
 
   const isValid =
     !!lightningInvoice ||
-    (validateBitcoinAddress(bitcoinAddress || "") && amount);
+    validateBitcoinAddress(bitcoinAddress || "");
 
   return {
     lightningInvoice,
