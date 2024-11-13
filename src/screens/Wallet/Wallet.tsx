@@ -1,33 +1,23 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
-import {
-  PinPad,
-  Loader,
-  View,
-  Button
-} from "@components";
-import {
-  faReply,
-  faShare,
-  faHome
-} from "@fortawesome/free-solid-svg-icons";
-import { useNfc, useInvoiceCallback, useRates } from "@hooks";
+import { PinPad } from "@components";
+import { useInvoiceCallback, useRates } from "@hooks";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Vibration } from "react-native";
 import { useTheme } from "styled-components";
 import * as S from "./styled";
 import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 // @ts-ignore
-import AnimatedLinearGradient from "react-native-animated-linear-gradient";
-import { colors as gradiantColors } from "./gradient-config";
 import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
 
 type WalletRequest = {
-  lightningRequest?: string;
   bitcoinAddress?: string;
+  description?: string;
+  lnurlw?: LnurlWData;
+  lnurlp?: LnurlPData;
+  isCard?: boolean;
 };
 
 const COIN = 100000000;
@@ -41,18 +31,17 @@ export const Wallet = () => {
   const { setBackgroundColor } = useContext(ThemeContext);
   const { colors } = useTheme();
   const {
-    nfcMessage,
-    setupNfc,
-    readingNfcLoop,
-    isNfcAvailable,
-    isNfcScanning,
-    isNfcNeedsTap
-  } = useNfc();
-  const {
-    callLnurl,
     requestInvoice,
     error
   } = useInvoiceCallback();
+
+  const {
+    bitcoinAddress,
+    description,
+    lnurlw,
+    lnurlp,
+    isCard
+  } = location.state || {};
 
   const [amount, setAmount] = useState<string>("");
   const [numAmount, setNumAmount] = useState<number>(0);
@@ -61,61 +50,10 @@ export const Wallet = () => {
   const [pin, setPin] = useState<string>();
   const [pinRequired, setPinRequired] = useState<boolean>(false);
   const [withdraw, setWithdraw] = useState<LnurlWData>();
-  const [lnurlw, setLnurlw] = useState<LnurlWData>();
-  const [lnurlp, setLnurlp] = useState<LnurlPData>();
-
-  const [loadingWallet, setLoadingWallet] = useState<boolean>(true);
 
   const rates = useRates();
   const [rateItems, setRateItems] = useState<ItemProps[]>([]);
   const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
-
-  const {
-    lightningRequest,
-    bitcoinAddress
-  } = location.state || {};
-
-  useEffect(() => {
-    setBackgroundColor(colors.primary, 0);
-    if (bitcoinAddress) {
-      setLoadingWallet(false);
-    } else if (!lightningRequest) {
-      void setupNfc();
-    }
-  }, [lightningRequest]);
-
-  // Read NFC Message
-  useEffect(() => {
-    if (isNfcAvailable && !isNfcNeedsTap) {
-      void readingNfcLoop();
-      setLoadingWallet(false);
-    }
-  }, [readingNfcLoop, isNfcAvailable, isNfcNeedsTap]);
-
-  // Fetch data from the URL in the NFC Message
-  useEffect(() => {
-    const request = nfcMessage ? nfcMessage : lightningRequest;
-    if (request) {
-      setLoadingWallet(true);
-      callLnurl(request).then(response => {
-        if (response) {
-          setLoadingWallet(false);
-          if (response.tag === "withdrawRequest") {
-            setLnurlw(response);
-            if (!lnurlp && response.payLink) {
-              callLnurl(response.payLink).then(payResponse => {
-                if (payResponse && payResponse.tag === "payRequest") {
-                  setLnurlp(payResponse);
-                }
-              });
-            }
-          } else if (response.tag === "payRequest") {
-            setLnurlp(response);
-          }
-        }
-      });
-    }
-  }, [nfcMessage]);
 
   useEffect(() => {
     if (withdraw && satAmount) {
@@ -159,7 +97,7 @@ export const Wallet = () => {
     setCurrentRate(newRate);
   }, [rates]);
 
-  const onPay = useCallback(() => {
+  const onLnurlW = useCallback(() => {
     if (lnurlw && satAmount) {
       setPin(undefined);
 
@@ -176,7 +114,7 @@ export const Wallet = () => {
     setWithdraw(lnurlw);
   }, [lnurlw]);
 
-  const onReceive = useCallback(() => {
+  const onRequestInvoice = useCallback(() => {
     if (satAmount) {
       if (lnurlp) {
         requestInvoice(lnurlp, satAmount).then(pr => {
@@ -214,13 +152,32 @@ export const Wallet = () => {
 
   return (
     <>
-      {(isNfcScanning || loadingWallet) && <AnimatedLinearGradient customColors={gradiantColors} speed={6000} />}
-      <S.WalletPageContainer>
-        {!(isNfcScanning || loadingWallet) && (lnurlw || lnurlp || bitcoinAddress) ? (
+      <S.WalletPageContainer
+        {...(satAmount && !pinRequired
+          ? {
+                footerButton: {
+                  type: "bitcoin",
+                  title: t(lnurlw ? (isCard ? "send" : "receive") : (isCard ? "receive" : "send")),
+                  onPress: () => {
+                    if(lnurlw) {
+                      onLnurlW();
+                    } else {
+                      onRequestInvoice();
+                    }
+                  }
+                }
+              }
+          : {})}
+      >
+        {(lnurlw || lnurlp || bitcoinAddress) ? (
           <S.WalletComponentStack>
             <S.TitleText h2>
-              {t("title")}
+              {t(bitcoinAddress ? "btcAddressTitle" :
+                (lnurlp ? isCard ? "invoiceTitle" : "lnAddressTitle" : "withdrawTitle"))}
             </S.TitleText>
+            <S.DescriptionText>
+              {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
+            </S.DescriptionText>
             <S.WalletValueWrapper>
               <S.AmountText h1>
                 {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
@@ -232,63 +189,31 @@ export const Wallet = () => {
               <S.SatAmountText h4>
                 {getNumberWithSpaces(satAmount)} Sat
               </S.SatAmountText>) : null}
-            <S.WalletButtonWrapper>
-              <View>
-                <S.WalletButton
-                  icon={faReply}
-                  size="large"
-                  title={t("receive")}
-                  onPress={onReceive}
-                  disabled={
-                    !satAmount ||
-                    ((!lnurlp ||
-                        lnurlp.minSendable / 1000 > satAmount ||
-                        lnurlp.maxSendable / 1000 < satAmount) &&
-                      !bitcoinAddress)
-                  }
-                />
-                {lnurlp && !pinRequired ? (
-                  <View>
-                    <S.InfoText>
-                      Min: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
-                    </S.InfoText>
-                    <S.InfoText>
-                      Max: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
-                    </S.InfoText>
-                  </View>
-                ) : null}
-              </View>
-
-              <View>
-                <S.WalletButton
-                  icon={faShare}
-                  isIconRight={true}
-                  size="large"
-                  title={t("send")}
-                  onPress={onPay}
-                  disabled={
-                    !satAmount ||
-                    !lnurlw ||
-                    lnurlw.maxWithdrawable / 1000 < satAmount
-                  }
-                />
-                {lnurlw && !pinRequired ? (
-                  <View>
-                    <S.InfoText>
-                      PIN Limit: {lnurlw.pinLimit ? getNumberWithSpaces(lnurlw.pinLimit) : "-"}
-                    </S.InfoText>
-                    <S.InfoText>
-                      Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
-                    </S.InfoText>
-                  </View>
-                ) : null}
-              </View>
-            </S.WalletButtonWrapper>
             {!pinRequired ? (
               <>
-                <S.DescriptionText>
-                  {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
-                </S.DescriptionText>
+                <S.WalletMinMaxWrapper>
+                  {lnurlp ? (
+                    <>
+                      <S.InfoText>
+                        Min: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
+                      </S.InfoText>
+                      <S.InfoText>
+                        Max: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
+                      </S.InfoText>
+                    </>
+                  ) : lnurlw ? (
+                    <>
+                      {lnurlw.pinLimit &&
+                        <S.InfoText>
+                          PIN Limit: {getNumberWithSpaces(lnurlw.pinLimit)}
+                        </S.InfoText>
+                      }
+                      <S.InfoText>
+                        Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
+                      </S.InfoText>
+                    </>
+                  ) : null}
+                </S.WalletMinMaxWrapper>
                 <NumPad
                   value={amount}
                   onNumberEntered={(value) => {
@@ -298,19 +223,11 @@ export const Wallet = () => {
                       setAmount("");
                     }
                   }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
-              </>) : null}
+              </>
+            ) : null}
           </S.WalletComponentStack>
-        ) : (
-          <S.CenterComponentStack>
-            <Loader
-              reason={t(loadingWallet ?
-                "loadingWallet" :
-                "tapYourBoltCard")
-              }
-            />
-          </S.CenterComponentStack>
-        )}
-        {pinRequired && !isNfcScanning ? (
+        ) : null}
+        {pinRequired ? (
           <PinPad onPinEntered={onPin} />
         ) : null}
       </S.WalletPageContainer>

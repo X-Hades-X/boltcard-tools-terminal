@@ -13,6 +13,7 @@ type ButtonProps = {
   title?: string;
   icon?: IconProp;
   isIconRight?: boolean;
+  isIconTop?: boolean;
   type?: "primary" | "success" | "error" | "bitcoin";
   isLoading?: boolean;
   disabled?: boolean;
@@ -37,6 +38,7 @@ export const Button = ({
   copyContent,
   icon = copyContent ? faCopy : undefined,
   isIconRight = false,
+  isIconTop = false,
   ...props
 }: ButtonProps) => {
   const theme = useTheme();
@@ -100,6 +102,7 @@ export const Button = ({
       mode={mode}
       size={size}
       isIconRight={isIconRight}
+      isIconTop={isIconTop}
       primaryColor={primaryColor}
       disabled={disabled || isLoading}
       isRound={(!!icon && !title) || size === "circle"}
@@ -121,6 +124,7 @@ export const Button = ({
           weight={700}
           buttonSize={size}
           isIconRight={isIconRight}
+          isIconTop={isIconTop}
           color={!isLoading ? secondaryColor : "transparent"}
           hasIcon={!!icon}
         >

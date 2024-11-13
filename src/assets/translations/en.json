@@ -63,7 +63,20 @@
       "returnToHome": "Return to Home"
     },
     "wallet": {
-      "title": "Enter amount",
+      "invoiceTitle": "Request invoice",
+      "withdrawTitle": "Withdraw",
+      "lnAddressTitle": "Pay to LN Address",
+      "btcAddressTitle": "Pay to BTC Address",
+      "send": "Send",
+      "receive": "Receive",
+      "tapYourBoltCard": "Tap your Bolt Card.",
+      "loadingWallet": "Loading wallet"
+    },
+    "decoder": {
+      "cardTitle": "Bolt Card Wallet",
+      "withdrawTitle": "Withdraw from LNURLw",
+      "lnAddressTitle": "Pay to LN Address",
+      "btcAddressTitle": "Pay to BTC Address",
       "send": "Send",
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card.",

@@ -48,7 +48,7 @@ export const Home = () => {
             type="primary"
             title={t("walletMode")}
             onPress={() => {
-              navigate("/wallet");
+              navigate("/decoder");
             }}
           />
           <Button

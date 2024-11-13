@@ -2,28 +2,14 @@ import styled from "styled-components";
 import {
   View,
   Text,
+  Button,
   PageContainer,
   ComponentStack,
-  SelectField
 } from "@components";
 
-export const WalletPageContainer = styled(PageContainer).attrs(() => ({}))``;
+export const DecoderPageContainer = styled(PageContainer).attrs(() => ({}))``;
 
 export const TitleText = styled(Text)`
-  color: ${({ theme }) => theme.colors.white};
-  text-align: center;
-`;
-
-export const AmountText = styled(Text)`
-  color: ${({ theme }) => theme.colors.white};
-  min-height: 72px;
-  font-size: 42px;
-  text-align: center;
-  margin: ${({ theme }) => `0px ${theme.gridSize / 2}px`};
-  flex: 1;
-`;
-
-export const SatAmountText = styled(Text)`
   color: ${({ theme }) => theme.colors.white};
   text-align: center;
 `;
@@ -40,26 +26,33 @@ export const DescriptionText = styled(Text)`
   text-align: center;
   width: fit-content;
   margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
+  padding-bottom: 12px;
 `;
 
-export const WalletMinMaxWrapper = styled(View)`
+export const DecoderButtonWrapper = styled(View)`
     display: flex;
-    flex-direction: row;
-    padding-bottom: 12px;
+    flex-direction: column;
+    min-width: 80%;
 `;
 
-export const WalletValueWrapper = styled(View)`
+export const DecoderMinMaxWrapper = styled(View)`
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: end;
+    justify-content: center;
     width: 100%;
 `;
 
-export const WalletComponentStack = styled(ComponentStack)`
+export const DecoderButton = styled(Button)`
+    margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
+`;
+
+export const DecoderComponentStack = styled(ComponentStack)`
   align-items: center;
 `;
 
-export const CurrencySelection = styled(SelectField)`
-  width: 65px;
+export const CenterComponentStack = styled(ComponentStack)`
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 `;

@@ -4,7 +4,7 @@ import { platform } from "@config";
 import styled from "styled-components";
 
 type Mode = "normal" | "outline";
-type Size = "small" | "medium" | "large" | "circle";
+type Size = "small" | "medium" | "large" | "huge" | "circle";
 
 const getPadding = (size: Size) => {
   switch (size) {
@@ -14,6 +14,8 @@ const getPadding = (size: Size) => {
       return 18;
     case "large":
       return 18;
+    case "huge":
+      return 24;
     case "circle":
       return 0;
   }
@@ -26,6 +28,7 @@ export const Button = styled(Pressable)<{
   isRound: boolean;
   isWhiteBackground?: boolean;
   isIconRight?: boolean;
+  isIconTop?: boolean;
 }>`
 
   ${({
@@ -36,7 +39,8 @@ export const Button = styled(Pressable)<{
     isRound,
     disabled,
     isWhiteBackground,
-    isIconRight
+    isIconRight,
+    isIconTop
   }) => {
     const height = (() => {
       switch (size) {
@@ -46,6 +50,8 @@ export const Button = styled(Pressable)<{
           return 48;
         case "large":
           return 74;
+        case "huge":
+          return 200;
         case "circle":
           return 280;
         default:
@@ -60,9 +66,8 @@ export const Button = styled(Pressable)<{
       ? theme.colors.secondaryLight
       : theme.colors.primaryLight;
 
-    const flexDirection = isIconRight
-      ? "row-reverse"
-      : "row";
+    const flexDirection = isIconTop ? "column" : 
+            isIconRight ? "row-reverse" : "row";
 
     return `
       flex-direction: ${flexDirection};
@@ -76,7 +81,7 @@ export const Button = styled(Pressable)<{
             };`
       }
       border-radius: ${borderRadius}px;
-      padding: 0px ${getPadding(size)}px;
+      padding: ${size === "huge" ? getPadding(size) : 0}px ${getPadding(size)}px;
       height: ${height}px;
       ${size !== "small" ? "width: 100%; flex-shrink: 1;" : ""}
       ${
@@ -113,6 +118,8 @@ const getIconSize = (size: Size) => {
       return 22;
     case "large":
       return 22;
+    case "huge":
+      return 36;
     case "circle":
       return 68;
   }
@@ -134,6 +141,7 @@ type ButtonTextProps = {
   buttonSize: Size;
   hasIcon: boolean;
   isIconRight: boolean;
+  isIconTop: boolean;
 };
 
 const TEXT_MARGIN = 6;
@@ -141,28 +149,29 @@ const TEXT_MARGIN = 6;
 export const ButtonText = styled(Text).attrs(
   ({ buttonSize }: ButtonTextProps) => {
     return {
-      h3: buttonSize === "circle",
+      h3: buttonSize === "circle" || buttonSize === "huge",
       h4: buttonSize === "medium" || buttonSize === "large",
       h5: buttonSize === "small"
     };
   }
 )<ButtonTextProps>`
-  ${({ hasIcon, buttonSize, isIconRight }) => {
-    const iconPlusMarginSize = hasIcon
+  ${({ hasIcon, buttonSize, isIconRight, isIconTop }) => {
+    const iconPlusMarginSize = hasIcon && !isIconTop
       ? getIconSize(buttonSize) + TEXT_MARGIN
       : 0;
 
     return `
       margin-left: ${hasIcon && !isIconRight ? TEXT_MARGIN : 0}px;
-      margin-${buttonSize !== "circle" ? "right" : "top"}: ${
+      margin-${buttonSize !== "circle" && !isIconTop ? "right" : "top"}: ${
         buttonSize === "circle" || isIconRight
           ? TEXT_MARGIN * 1.5
+          : isIconTop ? TEXT_MARGIN * 2
           : buttonSize !== "small"
           ? iconPlusMarginSize
           : 0
       }px;    
       ${
-        buttonSize !== "small" && buttonSize !== "circle"
+        buttonSize !== "small" && buttonSize !== "circle" && buttonSize !== "huge"
           ? "flex: 1;"
           : !platform.isWeb
           ? "top: 1px;"
@@ -173,7 +182,7 @@ export const ButtonText = styled(Text).attrs(
 
   position: relative;
   text-align: center;
-`;;;;;;;;;;;
+`;
 
 export const ButtonLoader = styled(Loader)`
   position: absolute;

@@ -24,7 +24,7 @@ export const useInitialClipboard = () => {
         duration: 10000,
         onPress: () => {
           toast.hide(toastId);
-          navigate(`/wallet`, {
+          navigate(`/decoder`, {
             state: {lightningRequest: clipboardData}
           });
         }

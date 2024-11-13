@@ -12,7 +12,7 @@ export const useInvoiceHandler = () => {
   const invoiceHandler = useCallback(
     (value: string) => {
       if (value.toLowerCase().indexOf("lnurl") >= 0 || value.indexOf("@") >= 0) {
-        navigate(`/wallet`, {
+        navigate(`/decoder`, {
           state: {lightningRequest: value}
         });
       } else {
@@ -27,7 +27,7 @@ export const useInvoiceHandler = () => {
 
         if (isValid) {
           if(bitcoinAddress && !amount) {
-            navigate(`/wallet`, {
+            navigate(`/decoder`, {
               state: {bitcoinAddress: bitcoinAddress}
             });
           } else {

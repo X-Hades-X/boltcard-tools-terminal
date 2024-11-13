@@ -1,6 +1,5 @@
 import qs from "query-string";
 import { validateBitcoinAddress } from "./validateBitcoinAddress";
-import { AddressType } from "bitcoin-address-validation";
 
 type InvoiceType = {
   bitcoin?: string;
