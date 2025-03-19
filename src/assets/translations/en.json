@@ -60,7 +60,8 @@
       "topupCard": "Tap your Bold Card to receive",
       "paid": "Paid",
       "received": "Received",
-      "returnToHome": "Return to Home"
+      "returnToHome": "Return to Home",
+      "copiedToClipboard": "Copied Invoice to Clipboard"
     },
     "wallet": {
       "invoiceTitle": "Request invoice",

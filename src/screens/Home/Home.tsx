@@ -43,14 +43,18 @@ export const Home = () => {
           </S.IntroText>
         </ComponentStack>
         <S.MainComponentStack>
-          <Button
-            size="large"
-            type="primary"
-            title={t("walletMode")}
-            onPress={() => {
-              navigate("/decoder");
-            }}
-          />
+          <S.BoltCardComponentStack
+            direction="horizontal"
+            gapSize={4}
+            componentAs={Pressable}
+          >
+            <S.IntroText h2 weight={600}
+                         onPress={() => {
+                           navigate("/decoder");
+                         }}>
+              {t("walletMode")}
+            </S.IntroText>
+          </S.BoltCardComponentStack>
           <Button
             isRound
             size="circle"

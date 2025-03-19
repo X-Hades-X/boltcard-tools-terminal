@@ -11,6 +11,7 @@ import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
+import { theme } from "@config/themes";
 
 type WalletRequest = {
   bitcoinAddress?: string;
@@ -52,7 +53,7 @@ export const Wallet = () => {
   const [withdraw, setWithdraw] = useState<LnurlWData>();
 
   const rates = useRates();
-  const [rateItems, setRateItems] = useState<ItemProps[]>([]);
+  const [rateItems, setRateItems] = useState<ItemProps[]>([{ label: "SAT - Satoshi", value: "SAT" }, { label: "BTC - Bitcoin", value: "BTC" }]);
   const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export const Wallet = () => {
 
   useEffect(() => {
     if (rates !== undefined) {
-      const ratesAsItems = [{ label: "SAT - Satoshi", value: "SAT" }, { label: "BTC - Bitcoin", value: "BTC" }];
+      const ratesAsItems = rateItems;
       for (const pair in rates) {
         const currentPair = rates[pair];
         const currencyShort = Object.keys(currentPair).filter(key => key !== "currency" && key !== "BTC").pop();
@@ -183,7 +184,9 @@ export const Wallet = () => {
                 {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
               </S.AmountText>
               <S.CurrencySelection showValue={true} value={currentRate.label} items={rateItems}
-                                   onChange={(val) => onRateChange(`${val.nativeEvent.text}`)} />
+                                   onChange={(val) => onRateChange(`${val.nativeEvent.text}`)}
+                                   style={{backgroundColor: theme.colors.greyLight}}
+              />
             </S.WalletValueWrapper>
             {currentRate.label !== "SAT" ? (
               <S.SatAmountText h4>

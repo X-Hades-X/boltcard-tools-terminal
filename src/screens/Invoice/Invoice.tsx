@@ -35,6 +35,8 @@ import * as S from "./styled";
 import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 import QRCode from "react-native-qrcode-svg";
+import { Clipboard } from "@utils";
+import { useToast } from "react-native-toast-notifications";
 
 type InvoiceState = XOR<
   {
@@ -58,6 +60,7 @@ type InvoiceState = XOR<
 const windowWidth = Dimensions.get("window").width;
 
 export const Invoice = () => {
+  const toast = useToast();
   const { t } = useTranslation(undefined, { keyPrefix: "screens.invoice" });
   const navigate = useNavigate();
   const { setBackgroundColor } = useContext(ThemeContext);
@@ -217,7 +220,15 @@ export const Invoice = () => {
     }
   }, [error]);
 
+  const onCopyToClipboard = useCallback(() => {
+    if (lightningInvoice || swapLightningInvoice) {
+      Clipboard.setString((lightningInvoice ? lightningInvoice : swapLightningInvoice) as string);
+      toast.show(t("copiedToClipboard"), { type: "success" });
+    }
+  }, [lightningInvoice, swapLightningInvoice, t, toast]);
+
   const onGetSwapQuote = useCallback(async () => {
+    // TODO this either broke somehow or doesn't work
     if (amount) {
       setIsSwapLoading(true);
       try {
@@ -421,7 +432,7 @@ export const Invoice = () => {
             reason={t(!isNfcScanning ? "payingInvoice" : (withdrawInvoice ? "topupCard" : "tapYourBoltCard"))}
           />
           {(lightningInvoice || swapLightningInvoice) && (
-            <S.QrCodeComponentStack>
+            <S.QrCodeComponentStack onTouchEnd={() => onCopyToClipboard()}>
               <S.QrCodeText h4 weight={700}>
                 {t("scanInvoice")}
               </S.QrCodeText>

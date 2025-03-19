@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { Picker as RootPicker } from "@components";
 
+// i have no idea why i can't just change the colour of this fucking thing and i am honestly done with react at this point because of it
 export const Picker = styled(RootPicker)`
   position: absolute;
   opacity: 0;
