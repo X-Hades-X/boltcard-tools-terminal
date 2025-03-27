@@ -80,12 +80,7 @@ export const Decoder = () => {
       callLnurl(request).then(response => {
         if (response) {
           if (response.tag === "withdrawRequest") {
-            setLnurlw(response);
-
-            const onlyMaxWithdraw =
-              response.maxWithdrawable &&
-              (response.minWithdrawable === undefined || response.minWithdrawable === response.maxWithdrawable);
-
+            const sats = response.maxWithdrawable / 1000;
             if (response.payLink) {
               callLnurl(response.payLink).then(payResponse => {
                 if (payResponse && payResponse.tag === "payRequest") {
@@ -94,12 +89,21 @@ export const Decoder = () => {
                 }
               });
             } else {
-              setLoadingWallet(false);
+              const onlyMaxWithdraw =
+                response.maxWithdrawable &&
+                (response.minWithdrawable === undefined || response.minWithdrawable === response.maxWithdrawable);
               if (onlyMaxWithdraw) {
                 // this can be swiped
-                setSatAmount(response.maxWithdrawable / 1000);
+                navigate(`/invoice`, {
+                  state: { message: response.defaultDescription, withdrawInvoice: response, withdrawAmount: sats }
+                });
               }
+
+              setSatAmount(sats);
+              setLoadingWallet(false);
             }
+
+            setLnurlw(response);
           } else if (response.tag === "payRequest") {
             setLnurlp(response);
             setLoadingWallet(false);
@@ -113,7 +117,7 @@ export const Decoder = () => {
     if (lnurlw) {
       if(satAmount) {
         navigate(`/invoice`, {
-          state: { withdrawInvoice: lnurlw, withdrawAmount: satAmount }
+          state: { message: lnurlw.defaultDescription, withdrawInvoice: lnurlw, withdrawAmount: satAmount }
         });
       }else {
         navigate(`/wallet`, {
