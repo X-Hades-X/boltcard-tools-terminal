@@ -4,7 +4,7 @@ import { platform } from "@config";
 import styled from "styled-components";
 
 type Mode = "normal" | "outline";
-type Size = "small" | "medium" | "large" | "huge" | "circle";
+type Size = "small" | "medium" | "large" | "circle";
 
 const getPadding = (size: Size) => {
   switch (size) {
@@ -14,8 +14,6 @@ const getPadding = (size: Size) => {
       return 18;
     case "large":
       return 18;
-    case "huge":
-      return 24;
     case "circle":
       return 0;
   }
@@ -27,9 +25,8 @@ export const Button = styled(Pressable)<{
   primaryColor: string;
   isRound: boolean;
   isWhiteBackground?: boolean;
-  isIconRight?: boolean;
-  isIconTop?: boolean;
 }>`
+  flex-direction: row;
 
   ${({
     theme,
@@ -38,9 +35,7 @@ export const Button = styled(Pressable)<{
     primaryColor,
     isRound,
     disabled,
-    isWhiteBackground,
-    isIconRight,
-    isIconTop
+    isWhiteBackground
   }) => {
     const height = (() => {
       switch (size) {
@@ -50,8 +45,6 @@ export const Button = styled(Pressable)<{
           return 48;
         case "large":
           return 74;
-        case "huge":
-          return 200;
         case "circle":
           return 280;
         default:
@@ -66,11 +59,7 @@ export const Button = styled(Pressable)<{
       ? theme.colors.secondaryLight
       : theme.colors.primaryLight;
 
-    const flexDirection = isIconTop ? "column" : 
-            isIconRight ? "row-reverse" : "row";
-
     return `
-      flex-direction: ${flexDirection};
       ${
         mode === "normal"
           ? `background-color: ${!disabled ? primaryColor : disabledColor};`
@@ -81,7 +70,7 @@ export const Button = styled(Pressable)<{
             };`
       }
       border-radius: ${borderRadius}px;
-      padding: ${size === "huge" ? getPadding(size) : 0}px ${getPadding(size)}px;
+      padding: 0px ${getPadding(size)}px;
       height: ${height}px;
       ${size !== "small" ? "width: 100%; flex-shrink: 1;" : ""}
       ${
@@ -118,8 +107,6 @@ const getIconSize = (size: Size) => {
       return 22;
     case "large":
       return 22;
-    case "huge":
-      return 36;
     case "circle":
       return 68;
   }
@@ -140,8 +127,6 @@ export const ButtonIcon = styled(Icon)
 type ButtonTextProps = {
   buttonSize: Size;
   hasIcon: boolean;
-  isIconRight: boolean;
-  isIconTop: boolean;
 };
 
 const TEXT_MARGIN = 6;
@@ -149,29 +134,28 @@ const TEXT_MARGIN = 6;
 export const ButtonText = styled(Text).attrs(
   ({ buttonSize }: ButtonTextProps) => {
     return {
-      h3: buttonSize === "circle" || buttonSize === "huge",
+      h3: buttonSize === "circle",
       h4: buttonSize === "medium" || buttonSize === "large",
       h5: buttonSize === "small"
     };
   }
 )<ButtonTextProps>`
-  ${({ hasIcon, buttonSize, isIconRight, isIconTop }) => {
-    const iconPlusMarginSize = hasIcon && !isIconTop
+  ${({ hasIcon, buttonSize }) => {
+    const iconPlusMarginSize = hasIcon
       ? getIconSize(buttonSize) + TEXT_MARGIN
       : 0;
 
     return `
-      margin-left: ${hasIcon && !isIconRight ? TEXT_MARGIN : 0}px;
-      margin-${buttonSize !== "circle" && !isIconTop ? "right" : "top"}: ${
-        buttonSize === "circle" || isIconRight
+      margin-left: ${hasIcon ? TEXT_MARGIN : 0}px;
+      margin-${buttonSize !== "circle" ? "right" : "top"}: ${
+        buttonSize === "circle"
           ? TEXT_MARGIN * 1.5
-          : isIconTop ? TEXT_MARGIN * 2
           : buttonSize !== "small"
           ? iconPlusMarginSize
           : 0
       }px;    
       ${
-        buttonSize !== "small" && buttonSize !== "circle" && buttonSize !== "huge"
+        buttonSize !== "small" && buttonSize !== "circle"
           ? "flex: 1;"
           : !platform.isWeb
           ? "top: 1px;"

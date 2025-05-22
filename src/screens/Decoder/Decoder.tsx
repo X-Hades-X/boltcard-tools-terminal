@@ -175,7 +175,6 @@ export const Decoder = () => {
                   size="circle"
                   type="bitcoin"
                   icon={!lnurlw ? faShare : faReply}
-                  isIconTop={true}
                   title={t(!lnurlw ? "send" : "receive")}
                   onPress={onLnurlP}
                 />
@@ -198,7 +197,6 @@ export const Decoder = () => {
                   size="circle"
                   type="bitcoin"
                   icon={!lnurlp ? faReply : faShare}
-                  isIconTop={true}
                   title={t(!lnurlp ? "receive" : "send")}
                   onPress={onLnurlW}
                 />
