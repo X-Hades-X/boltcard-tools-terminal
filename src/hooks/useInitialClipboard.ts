@@ -24,6 +24,7 @@ export const useInitialClipboard = () => {
         duration: 10000,
         onPress: () => {
           toast.hide(toastId);
+          Clipboard.setString("");
           navigate(`/decoder`, {
             state: {lightningRequest: clipboardData}
           });
@@ -47,6 +48,7 @@ export const useInitialClipboard = () => {
           duration: 10000,
           onPress: () => {
             toast.hide(toastId);
+            Clipboard.setString("");
             navigate(`/invoice`, {
               state: {
                 ...(lightningInvoice

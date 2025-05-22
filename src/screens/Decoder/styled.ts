@@ -29,22 +29,11 @@ export const DescriptionText = styled(Text)`
   padding-bottom: 12px;
 `;
 
-export const DecoderButtonWrapper = styled(View)`
-    display: flex;
-    flex-direction: column;
-    min-width: 80%;
-`;
-
 export const DecoderMinMaxWrapper = styled(View)`
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    width: 100%;
-`;
-
-export const DecoderButton = styled(Button)`
-    margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
 `;
 
 export const DecoderComponentStack = styled(ComponentStack)`
@@ -55,4 +44,9 @@ export const CenterComponentStack = styled(ComponentStack)`
   align-items: center;
   justify-content: center;
   height: 100%;
+`;
+
+export const ScaledDownButton = styled(Button)`
+    transform: scale(0.8);
+    margin: -42px;
 `;

@@ -2,11 +2,10 @@ import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
 import {
   Loader,
-  View,
 } from "@components";
 import {
   faReply,
-  faShare,
+  faShare
 } from "@fortawesome/free-solid-svg-icons";
 import { useNfc, useInvoiceCallback } from "@hooks";
 import { ThemeContext } from "@config";
@@ -169,13 +168,15 @@ export const Decoder = () => {
             <S.DescriptionText>
               {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
             </S.DescriptionText>
-            <S.DecoderButtonWrapper>
+            <S.DecoderComponentStack>
               {(lnurlp || bitcoinAddress) && (
-                <View>
-                  <S.DecoderButton
+                <S.DecoderComponentStack>
+                  <S.ScaledDownButton
+                    isRound
+                    size="circle"
+                    type="bitcoin"
                     icon={!lnurlw ? faShare : faReply}
                     isIconTop={true}
-                    size="huge"
                     title={t(!lnurlw ? "send" : "receive")}
                     onPress={onLnurlP}
                   />
@@ -189,15 +190,17 @@ export const Decoder = () => {
                       </S.InfoText>
                     </S.DecoderMinMaxWrapper>
                   )}
-                </View>
+                </S.DecoderComponentStack>
               )}
 
               {lnurlw && (
-                <View>
-                  <S.DecoderButton
+                <S.DecoderComponentStack>
+                  <S.ScaledDownButton
+                    isRound
+                    size="circle"
+                    type="bitcoin"
                     icon={!lnurlp ? faReply : faShare}
                     isIconTop={true}
-                    size="huge"
                     title={t(!lnurlp ? "receive" : "send")}
                     onPress={onLnurlW}
                   />
@@ -211,9 +214,9 @@ export const Decoder = () => {
                         Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
                       </S.InfoText>
                     </S.DecoderMinMaxWrapper>
-                </View>
+                </S.DecoderComponentStack>
               )}
-            </S.DecoderButtonWrapper>
+            </S.DecoderComponentStack>
           </S.DecoderComponentStack>
         ) : (
           <S.CenterComponentStack>
