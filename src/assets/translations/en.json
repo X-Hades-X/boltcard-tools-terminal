@@ -71,7 +71,8 @@
       "send": "Send",
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card.",
-      "loadingWallet": "Loading wallet"
+      "loadingWallet": "Loading wallet",
+      "notValid": "Amount not valid"
     },
     "decoder": {
       "cardTitle": "Bolt Card Wallet",

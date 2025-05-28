@@ -132,6 +132,18 @@ export const Wallet = () => {
     }
   }, [requestInvoice, navigate, lnurlp, satAmount, currentRate, numAmount, bitcoinAddress]);
 
+  const isAmountValid = useCallback(() => {
+    if(!satAmount){
+      return true;
+    }
+
+    if(lnurlw) {
+      return satAmount <= lnurlw.maxWithdrawable / 1000 && satAmount >= lnurlw.minWithdrawable / 1000
+    } else if(lnurlp) {
+      return satAmount <= lnurlp.maxSendable / 1000 && satAmount >= lnurlp.minSendable / 1000
+    }
+  }, [satAmount, lnurlp, lnurlw])
+
   useEffect(() => {
     if (error) {
       navigate("/");
@@ -159,6 +171,7 @@ export const Wallet = () => {
                 footerButton: {
                   type: "bitcoin",
                   title: t(lnurlw ? (isCard ? "send" : "receive") : (isCard ? "receive" : "send")),
+                  disabled: !isAmountValid(),
                   onPress: () => {
                     if(lnurlw) {
                       onLnurlW();
@@ -217,6 +230,9 @@ export const Wallet = () => {
                     </>
                   ) : null}
                 </S.WalletMinMaxWrapper>
+                {!isAmountValid() ? (
+                  <S.WalletErrorText>{t("notValid")}</S.WalletErrorText>
+                ) : (<S.WalletErrorSpace/>)}
                 <NumPad
                   value={amount}
                   onNumberEntered={(value) => {

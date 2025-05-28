@@ -4,7 +4,7 @@ import { platform } from "@config";
 import styled from "styled-components";
 
 type Mode = "normal" | "outline";
-type Size = "small" | "medium" | "large" | "circle";
+type Size = "small" | "medium" | "large" | "circle" | "smallCircle";
 
 const getPadding = (size: Size) => {
   switch (size) {
@@ -14,6 +14,7 @@ const getPadding = (size: Size) => {
       return 18;
     case "large":
       return 18;
+    case "smallCircle":
     case "circle":
       return 0;
   }
@@ -45,6 +46,8 @@ export const Button = styled(Pressable)<{
           return 48;
         case "large":
           return 74;
+        case "smallCircle":
+          return 140;
         case "circle":
           return 280;
         default:
@@ -82,7 +85,7 @@ export const Button = styled(Pressable)<{
       }
       ${disabled ? "opacity: 1;" : "cursor: pointer;"}
       ${getShadow(
-        size === "circle" ? { level: 8, shadowColor: primaryColor } : undefined
+        size === "circle" || size === "smallCircle" ? { level: 8, shadowColor: primaryColor } : undefined
       )}
     `;
   }}
@@ -107,6 +110,8 @@ const getIconSize = (size: Size) => {
       return 22;
     case "large":
       return 22;
+    case "smallCircle":
+      return 34;
     case "circle":
       return 68;
   }
@@ -135,7 +140,7 @@ export const ButtonText = styled(Text).attrs(
   ({ buttonSize }: ButtonTextProps) => {
     return {
       h3: buttonSize === "circle",
-      h4: buttonSize === "medium" || buttonSize === "large",
+      h4: buttonSize === "medium" || buttonSize === "large" || buttonSize === "smallCircle",
       h5: buttonSize === "small"
     };
   }
@@ -147,15 +152,15 @@ export const ButtonText = styled(Text).attrs(
 
     return `
       margin-left: ${hasIcon ? TEXT_MARGIN : 0}px;
-      margin-${buttonSize !== "circle" ? "right" : "top"}: ${
-        buttonSize === "circle"
+      margin-${buttonSize !== "circle" && buttonSize !== "smallCircle" ? "right" : "top"}: ${
+        buttonSize === "circle" || buttonSize === "smallCircle"
           ? TEXT_MARGIN * 1.5
           : buttonSize !== "small"
           ? iconPlusMarginSize
           : 0
       }px;    
       ${
-        buttonSize !== "small" && buttonSize !== "circle"
+        buttonSize !== "small" && buttonSize !== "circle" && buttonSize !== "smallCircle"
           ? "flex: 1;"
           : !platform.isWeb
           ? "top: 1px;"

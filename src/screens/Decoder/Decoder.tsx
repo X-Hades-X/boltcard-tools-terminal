@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
 import {
-  Loader,
+  Button,
+  Loader
 } from "@components";
 import {
   faReply,
@@ -165,53 +166,66 @@ export const Decoder = () => {
                   !lnurlw ? "lnAddressTitle" :
                     "withdrawTitle"))}
             </S.TitleText>
-            <S.DescriptionText>
+            <S.DescriptionText h3>
               {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
             </S.DescriptionText>
-            {(lnurlp || bitcoinAddress) && (
-              <S.DecoderComponentStack>
-                <S.ScaledDownButton
-                  isRound
-                  size="circle"
-                  type="bitcoin"
-                  icon={!lnurlw ? faShare : faReply}
-                  title={t(!lnurlw ? "send" : "receive")}
-                  onPress={onLnurlP}
-                />
-                {lnurlp && (
-                  <S.DecoderMinMaxWrapper>
-                    <S.InfoText>
-                      Min: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
-                    </S.InfoText>
-                    <S.InfoText>
-                      Max: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
-                    </S.InfoText>
-                  </S.DecoderMinMaxWrapper>
-                )}
-              </S.DecoderComponentStack>
-            )}
-            {lnurlw && (
-              <S.DecoderComponentStack>
-                <S.ScaledDownButton
-                  isRound
-                  size="circle"
-                  type="bitcoin"
-                  icon={!lnurlp ? faReply : faShare}
-                  title={t(!lnurlp ? "receive" : "send")}
-                  onPress={onLnurlW}
-                />
-                  <S.DecoderMinMaxWrapper>
-                    {lnurlw.pinLimit &&
-                      <S.InfoText>
-                        PIN Limit: {getNumberWithSpaces(lnurlw.pinLimit)}
-                      </S.InfoText>
-                    }
-                    <S.InfoText>
-                      Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
-                    </S.InfoText>
-                  </S.DecoderMinMaxWrapper>
-              </S.DecoderComponentStack>
-            )}
+            <S.DecoderCenterStack>
+              {(lnurlp || bitcoinAddress) && (
+                <>
+                  <S.SectionTitle h2>{t(!lnurlw ? "send" : "receive")}</S.SectionTitle>
+                  <S.DecoderGridStack>
+                    {lnurlp && (
+                        <S.DecoderMinMaxWrapper>
+                          <S.DecoderLabel>Min:</S.DecoderLabel>
+                          <S.DecoderValue>{getNumberWithSpaces(lnurlp.minSendable / 1000)}</S.DecoderValue>
+                          <S.DecoderLabel>Max:</S.DecoderLabel>
+                          <S.DecoderValue>{getNumberWithSpaces(lnurlp.maxSendable / 1000)}</S.DecoderValue>
+                        </S.DecoderMinMaxWrapper>
+                    )}
+                  </S.DecoderGridStack>
+                </>
+              )}
+              {lnurlw && (
+                <>
+                  <S.SectionTitle h2>{t(!lnurlp ? "receive" : "send")}</S.SectionTitle>
+                  <S.DecoderGridStack>
+                    <S.DecoderMinMaxWrapper>
+                      {lnurlw.pinLimit &&
+                        <>
+                          <S.DecoderLabel>PIN Limit:</S.DecoderLabel>
+                          <S.DecoderValue>{getNumberWithSpaces(lnurlw.pinLimit)}</S.DecoderValue>
+                        </>
+                      }
+                      <S.DecoderLabel>Max:</S.DecoderLabel>
+                      <S.DecoderValue>{getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}</S.DecoderValue>
+                    </S.DecoderMinMaxWrapper>
+                  </S.DecoderGridStack>
+                </>
+              )}
+            </S.DecoderCenterStack>
+
+            <S.DecoderBottomView>
+              {(lnurlp || bitcoinAddress) && (
+                  <Button
+                    isRound
+                    size="smallCircle"
+                    type="bitcoin"
+                    icon={!lnurlw ? faShare : faReply}
+                    title={t(!lnurlw ? "send" : "receive")}
+                    onPress={onLnurlP}
+                  />
+              )}
+              {lnurlw && (
+                  <Button
+                    isRound
+                    size="smallCircle"
+                    type="bitcoin"
+                    icon={!lnurlp ? faReply : faShare}
+                    title={t(!lnurlp ? "receive" : "send")}
+                    onPress={onLnurlW}
+                  />
+              )}
+            </S.DecoderBottomView>
           </S.DecoderComponentStack>
         ) : (
           <S.CenterComponentStack>

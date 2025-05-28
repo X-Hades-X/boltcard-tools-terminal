@@ -45,7 +45,18 @@ export const DescriptionText = styled(Text)`
 export const WalletMinMaxWrapper = styled(View)`
     display: flex;
     flex-direction: row;
-    padding-bottom: 12px;
+`;
+
+export const WalletErrorSpace = styled(View)`
+    height: 50px;
+`;
+
+export const WalletErrorText = styled(Text)`
+    color: ${({ theme }) => theme.colors.error};
+    text-align: center;
+    width: fit-content;
+    margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
+    height: 40px;
 `;
 
 export const WalletValueWrapper = styled(View)`
