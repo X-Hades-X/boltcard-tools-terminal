@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
-import { ComponentStack, PinPad, Text } from "@components";
+import { ComponentStack, PinPad, Text, View } from "@components";
 import { useInvoiceCallback, useRates } from "@hooks";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -148,7 +148,14 @@ export const Wallet = () => {
     } else if(lnurlp) {
       return satAmount <= lnurlp.maxSendable / 1000 && satAmount >= lnurlp.minSendable / 1000
     }
-  }, [satAmount, bitcoinAddress, lnurlp, lnurlw])
+  }, [satAmount, bitcoinAddress, lnurlp, lnurlw]);
+
+  const canSend = useCallback(() => {
+    if(!satAmount){
+      return false;
+    }
+    return isAmountValid();
+  }, [satAmount, isAmountValid]);
 
   useEffect(() => {
     if (error) {
@@ -172,12 +179,12 @@ export const Wallet = () => {
   return (
     <>
       <S.WalletPageContainer
-        {...(satAmount && !pinRequired
+        {...(!pinRequired
           ? {
                 footerButton: {
                   type: "bitcoin",
                   title: t(lnurlw ? (isCard ? "send" : "receive") : (isCard ? "receive" : "send")),
-                  disabled: !isAmountValid(),
+                  disabled: !canSend(),
                   onPress: () => {
                     if(lnurlw) {
                       onLnurlW();
@@ -193,6 +200,11 @@ export const Wallet = () => {
         {(lnurlw || lnurlp || bitcoinAddress) ? (
           <>
           <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
+            <S.ListItemWrapper>
+              <Text h2 weight={600} color={colors.white}>
+                {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription || ''}
+              </Text>
+            </S.ListItemWrapper>
             <ListItem
               title={''}
               icon={faInfo}
@@ -202,11 +214,6 @@ export const Wallet = () => {
                 lnurlp || isCard ? colors.lightning : colors.bitcoin
               }
             />
-            <S.ListItemWrapper>
-              <Text h4 weight={600} color={colors.greyLight}>
-                {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription || ''}
-              </Text>
-            </S.ListItemWrapper>
             <S.WalletComponentStack>
               <S.WalletValueWrapper>
                 <S.AmountText h1>
@@ -221,59 +228,58 @@ export const Wallet = () => {
                 <S.SatAmountText h4>
                   {getNumberWithSpaces(satAmount)} Sat
                 </S.SatAmountText>) : <S.SatAmountSpace/>}
-              {!pinRequired ? (
-                <>
-                  <S.WalletMinMaxWrapper>
-                    {bitcoinAddress ? (
-                      <>
-                        <S.InfoText>
-                          {t("min")}: {getNumberWithSpaces(minLoopOut)}
-                        </S.InfoText>
-                      </>
-                    ) : lnurlp ? (
-                      <>
-                        <S.InfoText>
-                          {t("min")}: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
-                        </S.InfoText>
-                        <S.InfoText>
-                          {t("max")}: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
-                        </S.InfoText>
-                      </>
-                    ) : lnurlw ? (
-                      <>
-                        {lnurlw.pinLimit &&
-                          <S.InfoText>
-                            {t("pinLimit")}: {getNumberWithSpaces(lnurlw.pinLimit)}
-                          </S.InfoText>
-                        }
-                        <S.InfoText>
-                          {t("max")}: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
-                        </S.InfoText>
-                      </>
-                    ) : null}
-                  </S.WalletMinMaxWrapper>
-                  {!isAmountValid() ? (
-                    <S.WalletErrorText>{t("notValid")}</S.WalletErrorText>
-                  ) : (<S.WalletErrorSpace/>)}
-                  <NumPad
-                    value={amount}
-                    onNumberEntered={(value) => {
-                      if (value) {
-                        setAmount(value);
-                      } else {
-                        setAmount("");
-                      }
-                    }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
-                </>
-              ) : null}
             </S.WalletComponentStack>
           </ComponentStack>
           </>
         ) : null}
         </ComponentStack>
         {pinRequired ? (
-          <PinPad onPinEntered={onPin} />
-        ) : null}
+          <PinPad onPinEntered={onPin} onClose={()=>setPinRequired(false)}/>
+        ) : (
+          <S.WalletNumPadWrapper>
+            <View>
+              {bitcoinAddress ? (
+                <S.WalletMinMaxWrapper>
+                  <S.InfoText>
+                    {t("min")}: {getNumberWithSpaces(minLoopOut)}
+                  </S.InfoText>
+                </S.WalletMinMaxWrapper>
+              ) : lnurlp ? (
+                <S.WalletMinMaxWrapper>
+                  <S.InfoText>
+                    {t("min")}: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
+                  </S.InfoText>
+                  <S.InfoText>
+                    {t("max")}: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
+                  </S.InfoText>
+                </S.WalletMinMaxWrapper>
+              ) : lnurlw ? (
+                <S.WalletMinMaxWrapper>
+                  {lnurlw.pinLimit &&
+                    <S.InfoText>
+                      {t("pinLimit")}: {getNumberWithSpaces(lnurlw.pinLimit)}
+                    </S.InfoText>
+                  }
+                  <S.InfoText>
+                    {t("max")}: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
+                  </S.InfoText>
+                </S.WalletMinMaxWrapper>
+              ) : null}
+              {!isAmountValid() ? (
+                <S.WalletErrorText>{t("notValid")}</S.WalletErrorText>
+              ) : (<S.WalletErrorSpace/>)}
+            </View>
+            <NumPad
+              value={amount}
+              onNumberEntered={(value) => {
+                if (value) {
+                  setAmount(value);
+                } else {
+                  setAmount("");
+                }
+              }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
+          </S.WalletNumPadWrapper>
+        )}
       </S.WalletPageContainer>
     </>
   );

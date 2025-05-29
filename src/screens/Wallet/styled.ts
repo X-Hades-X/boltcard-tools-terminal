@@ -38,9 +38,17 @@ export const InfoText = styled(Text)`
   margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
 `;
 
+export const WalletNumPadWrapper = styled(View)`
+    flex: 1;
+    justify-content: space-between;
+    width: 100%;
+`;
+
 export const WalletMinMaxWrapper = styled(View)`
     display: flex;
     flex-direction: row;
+    width: 100%;
+    justify-content: center;
 `;
 
 export const WalletErrorSpace = styled(View)`
@@ -66,6 +74,7 @@ export const WalletValueWrapper = styled(View)`
 export const WalletComponentStack = styled(ComponentStack)`
     margin-top: 42px;
     align-items: center;
+    flex: 1;
 `;
 
 export const CurrencySelection = styled(SelectField)`

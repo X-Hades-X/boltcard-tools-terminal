@@ -13,6 +13,7 @@ type PinViewFunctions = {
 
 type PinPadProps = {
   onPinEntered: (pin: string) => void;
+  onClose?: () => void;
 }
 
 const LeftButton = () => <Icon icon={faDeleteLeft} size={36} color={"#FFF"} />;
@@ -50,6 +51,7 @@ export const PinPad = (props: PinPadProps) => {
             initialHeight={535}
             backdropOpacity={0}
             customStyles={S.BottomDrawerStyles}
+            onClose={props.onClose}
         >
             <S.PinPadContainer>
               <S.PinPadTitle>

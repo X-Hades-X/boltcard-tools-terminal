@@ -73,7 +73,7 @@
       "btcAddressTitle": "Pay to BTC Address",
       "send": "Send",
       "receive": "Receive",
-      "tapYourBoltCard": "Tap your Bolt Card.",
+      "tapYourBoltCard": "Tap your Bolt Card",
       "loadingWallet": "Loading wallet",
       "notValid": "Amount not valid",
       "min": "Min",
@@ -81,14 +81,17 @@
       "pinLimit": "PIN Limit"
     },
     "decoder": {
-      "cardTitle": "Bolt Card Wallet",
-      "withdrawTitle": "Withdraw from LNURLw",
+      "showInfo": "Show card limits",
+      "hideInfo": "Hide card limits",
       "lnAddressTitle": "Pay to LN Address",
       "btcAddressTitle": "Pay to BTC Address",
       "send": "Send",
       "receive": "Receive",
-      "tapYourBoltCard": "Tap your Bolt Card.",
-      "loadingWallet": "Loading wallet"
+      "tapYourBoltCard": "Tap your Bolt Card",
+      "loadingWallet": "Loading wallet",
+      "min": "Min",
+      "max": "Max",
+      "pinLimit": "PIN Limit"
     }
   },
   "errors": {

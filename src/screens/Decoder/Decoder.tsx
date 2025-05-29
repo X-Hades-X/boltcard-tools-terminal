@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
 import {
-  Button,
-  Loader
+  Button, ComponentStack,
+  Loader, Pressable, Text
 } from "@components";
 import {
+  faCaretDown, faCaretRight, faCaretUp,
+  faLock,
   faReply,
   faShare
 } from "@fortawesome/free-solid-svg-icons";
@@ -18,6 +20,7 @@ import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import AnimatedLinearGradient from "react-native-animated-linear-gradient";
 import { colors as gradiantColors } from "./gradient-config";
 import { getNumberWithSpaces } from "@utils/numberWithSpaces";
+import { ListItem } from "@components/ItemsList/components/ListItem";
 
 type DecoderRequest = {
   lightningRequest?: string;
@@ -50,6 +53,7 @@ export const Decoder = () => {
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
   const [loadingWallet, setLoadingWallet] = useState<boolean>(false);
+  const [showInfo, setShowInfo] = useState<boolean>(false);
 
   const {
     lightningRequest,
@@ -172,50 +176,69 @@ export const Decoder = () => {
       <S.DecoderPageContainer>
         {!(isNfcScanning || loadingWallet) && (lnurlw || lnurlp || bitcoinAddress) ? (
           <S.DecoderComponentStack>
-            <S.TitleText h2>
-              {t(bitcoinAddress ? "btcAddressTitle" :
-                (lnurlw && lnurlp ? "cardTitle" :
-                  !lnurlw ? "lnAddressTitle" :
-                    "withdrawTitle"))}
-            </S.TitleText>
-            <S.DescriptionText h3>
-              {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
-            </S.DescriptionText>
-            <S.DecoderCenterStack>
-              {(lnurlp || bitcoinAddress) && (
-                <>
-                  <S.SectionTitle h2>{t(!lnurlw ? "send" : "receive")}</S.SectionTitle>
-                  <S.DecoderGridStack>
-                    {lnurlp && (
-                        <S.DecoderMinMaxWrapper>
-                          <S.DecoderLabel>Min:</S.DecoderLabel>
-                          <S.DecoderValue>{getNumberWithSpaces(lnurlp.minSendable / 1000)}</S.DecoderValue>
-                          <S.DecoderLabel>Max:</S.DecoderLabel>
-                          <S.DecoderValue>{getNumberWithSpaces(lnurlp.maxSendable / 1000)}</S.DecoderValue>
-                        </S.DecoderMinMaxWrapper>
-                    )}
-                  </S.DecoderGridStack>
-                </>
-              )}
-              {lnurlw && (
-                <>
-                  <S.SectionTitle h2>{t(!lnurlp ? "receive" : "send")}</S.SectionTitle>
-                  <S.DecoderGridStack>
-                    <S.DecoderMinMaxWrapper>
-                      {lnurlw.pinLimit &&
-                        <>
-                          <S.DecoderLabel>PIN Limit:</S.DecoderLabel>
-                          <S.DecoderValue>{getNumberWithSpaces(lnurlw.pinLimit)}</S.DecoderValue>
-                        </>
-                      }
-                      <S.DecoderLabel>Max:</S.DecoderLabel>
-                      <S.DecoderValue>{getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}</S.DecoderValue>
-                    </S.DecoderMinMaxWrapper>
-                  </S.DecoderGridStack>
-                </>
-              )}
-            </S.DecoderCenterStack>
+            <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
+              <S.ListItemWrapper>
+                <Text h2 weight={600} color={colors.white}>
+                  {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
+                </Text>
+              </S.ListItemWrapper>
 
+              <Pressable onPress={()=>setShowInfo(!showInfo)}>
+                <ListItem
+                  title={t(showInfo ? "hideInfo" : "showInfo")}
+                  icon={showInfo ? faCaretDown : faCaretRight}
+                  value={''}
+                />
+              </Pressable>
+
+              {showInfo && (
+                <>
+                  {(lnurlp || bitcoinAddress) && (
+                    <S.ListItemWrapper>
+                      <Text h3 weight={600} color={colors.lightning}>
+                        {t(!lnurlw ? "send" : "receive")}
+                      </Text>
+                      {lnurlp && (
+                        <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
+                          <ListItem
+                            title={t("min")}
+                            icon={faCaretDown}
+                            value={getNumberWithSpaces(lnurlp.minSendable / 1000) + ' sats'}
+                          />
+                          <ListItem
+                            title={t("max")}
+                            icon={faCaretUp}
+                            value={getNumberWithSpaces(lnurlp.maxSendable / 1000) + ' sats'}
+                          />
+                        </ComponentStack>
+                      )}
+                    </S.ListItemWrapper>
+                  )}
+                  {lnurlw && (
+                    <S.ListItemWrapper>
+                      <Text h3 weight={600} color={colors.lightning}>
+                        {t(!lnurlp ? "receive" : "send")}
+                      </Text>
+                      <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
+                        {lnurlw.pinLimit && (
+                          <ListItem
+                            title={t("pinLimit")}
+                            icon={faLock}
+                            value={getNumberWithSpaces(lnurlw.pinLimit) + ' sats'}
+                          />
+                        )}
+                        <ListItem
+                          title={t("max")}
+                          icon={faCaretUp}
+                          value={getNumberWithSpaces(lnurlw.maxWithdrawable / 1000) + ' sats'}
+                        />
+                      </ComponentStack>
+                    </S.ListItemWrapper>
+                  )}
+                </>
+              )}
+            </ComponentStack>
+            <S.DecoderSpacerStack/>
             <S.DecoderBottomView>
               {(lnurlp || bitcoinAddress) && (
                   <Button
