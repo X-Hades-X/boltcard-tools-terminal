@@ -289,23 +289,16 @@ export const Invoice = () => {
                 }
               }
             }
-            : {
-              footerButton: {
-                type: "bitcoin",
-                title: t("returnToHome"),
-                onPress: () => {
-                  void onReturnToHome();
-                }
-              }}
-        : {
-          footerButton: {
-            type: "bitcoin",
-            title: t("returnToHome"),
-            onPress: () => {
-              void onReturnToHome();
-            }
-          }
-        })}
+            : !(pinRequired && !pinConfirmed)
+              ? {
+                footerButton: {
+                  type: "bitcoin",
+                  title: t("returnToHome"),
+                  onPress: () => {
+                    void onReturnToHome();
+                  }
+                }} : {}
+        : {})}
       isContentVerticallyCentered={isPaySuccess}
     >
       <ComponentStack>
@@ -440,7 +433,11 @@ export const Invoice = () => {
         <PinPad onPinEntered={(value) => {
           setPin(value);
           setPinConfirmed(true);
-        }} />
+        }}
+        onClose={() => {
+          setPinRequired(false);
+          void setupNfc();
+        }}/>
       ) : (lightningInvoice || swapLightningInvoice || withdrawInvoice) ? (
         <S.QrCodeComponentStack>
           <Loader
