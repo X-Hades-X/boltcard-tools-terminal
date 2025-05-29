@@ -43,6 +43,9 @@
       "scanInvoice": "or scan invoice",
       "scanInvoiceHint": "Scanning the invoice with another device will not be confirmed here.",
       "network": "Network",
+      "lightning": "Lightning",
+      "lightningTopup": "Lightning Top-Up",
+      "onchain": "Onchain",
       "label": "Label",
       "message": "Message",
       "invoiceAmount": "Invoice amount",
@@ -72,7 +75,10 @@
       "receive": "Receive",
       "tapYourBoltCard": "Tap your Bolt Card.",
       "loadingWallet": "Loading wallet",
-      "notValid": "Amount not valid"
+      "notValid": "Amount not valid",
+      "min": "Min",
+      "max": "Max",
+      "pinLimit": "PIN Limit"
     },
     "decoder": {
       "cardTitle": "Bolt Card Wallet",

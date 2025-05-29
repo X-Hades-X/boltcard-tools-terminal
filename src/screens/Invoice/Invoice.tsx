@@ -289,8 +289,23 @@ export const Invoice = () => {
                 }
               }
             }
-            : {}
-        : {})}
+            : {
+              footerButton: {
+                type: "bitcoin",
+                title: t("returnToHome"),
+                onPress: () => {
+                  void onReturnToHome();
+                }
+              }}
+        : {
+          footerButton: {
+            type: "bitcoin",
+            title: t("returnToHome"),
+            onPress: () => {
+              void onReturnToHome();
+            }
+          }
+        })}
       isContentVerticallyCentered={isPaySuccess}
     >
       <ComponentStack>
@@ -304,7 +319,7 @@ export const Invoice = () => {
                   ? { icon: faBolt, color: colors.lightning }
                   : { icon: faBitcoin, color: colors.bitcoin }
               }
-              value={stateLightningInvoice ? "Lightning" : withdrawInvoice ? "Lightning Top-Up" : "Onchain"}
+              value={t(stateLightningInvoice ? "lightning" : withdrawInvoice ? "lightningTopup" : "onchain")}
               valueColor={
                 stateLightningInvoice || withdrawInvoice ? colors.lightning : colors.bitcoin
               }

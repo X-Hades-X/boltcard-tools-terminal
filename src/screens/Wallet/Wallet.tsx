@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
-import { PinPad } from "@components";
+import { ComponentStack, PinPad, Text } from "@components";
 import { useInvoiceCallback, useRates } from "@hooks";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -12,6 +12,8 @@ import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
 import { theme } from "@config/themes";
+import { ListItem } from "@components/ItemsList/components/ListItem";
+import { faInfo } from "@fortawesome/free-solid-svg-icons";
 
 type WalletRequest = {
   bitcoinAddress?: string;
@@ -24,6 +26,7 @@ type WalletRequest = {
 const COIN = 100000000;
 const satCurrency = { label: "SAT", value: 1 };
 const coinCurrency = { label: "BTC", value: COIN };
+const minLoopOut = 1000;
 
 export const Wallet = () => {
   const { t } = useTranslation(undefined, { keyPrefix: "screens.wallet" });
@@ -53,7 +56,7 @@ export const Wallet = () => {
   const [withdraw, setWithdraw] = useState<LnurlWData>();
 
   const rates = useRates();
-  const [rateItems, setRateItems] = useState<ItemProps[]>([{ label: "SAT - Satoshi", value: "SAT" }, { label: "BTC - Bitcoin", value: "BTC" }]);
+  const [rateItems, setRateItems] = useState<ItemProps[]>([]);
   const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
   useEffect(() => {
@@ -74,7 +77,7 @@ export const Wallet = () => {
 
   useEffect(() => {
     if (rates !== undefined) {
-      const ratesAsItems = rateItems;
+      const ratesAsItems = [{ label: "SAT - Satoshi", value: "SAT" }, { label: "BTC - Bitcoin", value: "BTC" }];
       for (const pair in rates) {
         const currentPair = rates[pair];
         const currencyShort = Object.keys(currentPair).filter(key => key !== "currency" && key !== "BTC").pop();
@@ -137,12 +140,15 @@ export const Wallet = () => {
       return true;
     }
 
-    if(lnurlw) {
+    if(bitcoinAddress){
+      // TODO 1000 sats min amount to avoid users swapping out dust? (would still be kinda stupid)
+      return satAmount > minLoopOut;
+    } else if(lnurlw) {
       return satAmount <= lnurlw.maxWithdrawable / 1000 && satAmount >= lnurlw.minWithdrawable / 1000
     } else if(lnurlp) {
       return satAmount <= lnurlp.maxSendable / 1000 && satAmount >= lnurlp.minSendable / 1000
     }
-  }, [satAmount, lnurlp, lnurlw])
+  }, [satAmount, bitcoinAddress, lnurlp, lnurlw])
 
   useEffect(() => {
     if (error) {
@@ -183,69 +189,88 @@ export const Wallet = () => {
               }
           : {})}
       >
+        <ComponentStack>
         {(lnurlw || lnurlp || bitcoinAddress) ? (
-          <S.WalletComponentStack>
-            <S.TitleText h2>
-              {t(bitcoinAddress ? "btcAddressTitle" :
+          <>
+          <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
+            <ListItem
+              title={''}
+              icon={faInfo}
+              value={t(bitcoinAddress ? "btcAddressTitle" :
                 (lnurlp ? isCard ? "invoiceTitle" : "lnAddressTitle" : "withdrawTitle"))}
-            </S.TitleText>
-            <S.DescriptionText>
-              {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
-            </S.DescriptionText>
-            <S.WalletValueWrapper>
-              <S.AmountText h1>
-                {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
-              </S.AmountText>
-              <S.CurrencySelection showValue={true} value={currentRate.label} items={rateItems}
-                                   onChange={(val) => onRateChange(`${val.nativeEvent.text}`)}
-                                   style={{backgroundColor: theme.colors.greyLight}}
-              />
-            </S.WalletValueWrapper>
-            {currentRate.label !== "SAT" ? (
-              <S.SatAmountText h4>
-                {getNumberWithSpaces(satAmount)} Sat
-              </S.SatAmountText>) : null}
-            {!pinRequired ? (
-              <>
-                <S.WalletMinMaxWrapper>
-                  {lnurlp ? (
-                    <>
-                      <S.InfoText>
-                        Min: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
-                      </S.InfoText>
-                      <S.InfoText>
-                        Max: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
-                      </S.InfoText>
-                    </>
-                  ) : lnurlw ? (
-                    <>
-                      {lnurlw.pinLimit &&
+              valueColor={
+                lnurlp || isCard ? colors.lightning : colors.bitcoin
+              }
+            />
+            <S.ListItemWrapper>
+              <Text h4 weight={600} color={colors.greyLight}>
+                {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription || ''}
+              </Text>
+            </S.ListItemWrapper>
+            <S.WalletComponentStack>
+              <S.WalletValueWrapper>
+                <S.AmountText h1>
+                  {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
+                </S.AmountText>
+                <S.CurrencySelection showValue={true} value={currentRate.label} items={rateItems}
+                                     onChange={(val) => onRateChange(`${val.nativeEvent.text}`)}
+                                     style={{backgroundColor: theme.colors.greyLight}}
+                />
+              </S.WalletValueWrapper>
+              {currentRate.label !== "SAT" ? (
+                <S.SatAmountText h4>
+                  {getNumberWithSpaces(satAmount)} Sat
+                </S.SatAmountText>) : <S.SatAmountSpace/>}
+              {!pinRequired ? (
+                <>
+                  <S.WalletMinMaxWrapper>
+                    {bitcoinAddress ? (
+                      <>
                         <S.InfoText>
-                          PIN Limit: {getNumberWithSpaces(lnurlw.pinLimit)}
+                          {t("min")}: {getNumberWithSpaces(minLoopOut)}
                         </S.InfoText>
+                      </>
+                    ) : lnurlp ? (
+                      <>
+                        <S.InfoText>
+                          {t("min")}: {getNumberWithSpaces(lnurlp.minSendable / 1000)}
+                        </S.InfoText>
+                        <S.InfoText>
+                          {t("max")}: {getNumberWithSpaces(lnurlp.maxSendable / 1000)}
+                        </S.InfoText>
+                      </>
+                    ) : lnurlw ? (
+                      <>
+                        {lnurlw.pinLimit &&
+                          <S.InfoText>
+                            {t("pinLimit")}: {getNumberWithSpaces(lnurlw.pinLimit)}
+                          </S.InfoText>
+                        }
+                        <S.InfoText>
+                          {t("max")}: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
+                        </S.InfoText>
+                      </>
+                    ) : null}
+                  </S.WalletMinMaxWrapper>
+                  {!isAmountValid() ? (
+                    <S.WalletErrorText>{t("notValid")}</S.WalletErrorText>
+                  ) : (<S.WalletErrorSpace/>)}
+                  <NumPad
+                    value={amount}
+                    onNumberEntered={(value) => {
+                      if (value) {
+                        setAmount(value);
+                      } else {
+                        setAmount("");
                       }
-                      <S.InfoText>
-                        Max: {getNumberWithSpaces(lnurlw.maxWithdrawable / 1000)}
-                      </S.InfoText>
-                    </>
-                  ) : null}
-                </S.WalletMinMaxWrapper>
-                {!isAmountValid() ? (
-                  <S.WalletErrorText>{t("notValid")}</S.WalletErrorText>
-                ) : (<S.WalletErrorSpace/>)}
-                <NumPad
-                  value={amount}
-                  onNumberEntered={(value) => {
-                    if (value) {
-                      setAmount(value);
-                    } else {
-                      setAmount("");
-                    }
-                  }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
-              </>
-            ) : null}
-          </S.WalletComponentStack>
+                    }} fixed={currentRate.label !== "SAT" ? (currentRate.label !== "BTC" ? 2 : 8) : 0} />
+                </>
+              ) : null}
+            </S.WalletComponentStack>
+          </ComponentStack>
+          </>
         ) : null}
+        </ComponentStack>
         {pinRequired ? (
           <PinPad onPinEntered={onPin} />
         ) : null}

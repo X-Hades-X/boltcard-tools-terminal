@@ -80,6 +80,8 @@ export const Decoder = () => {
       callLnurl(request).then(response => {
         if (response) {
           if (response.tag === "withdrawRequest") {
+            setLnurlw(response);
+
             const sats = response.maxWithdrawable / 1000;
             if (response.payLink) {
               callLnurl(response.payLink).then(payResponse => {
@@ -102,8 +104,6 @@ export const Decoder = () => {
               setSatAmount(sats);
               setLoadingWallet(false);
             }
-
-            setLnurlw(response);
           } else if (response.tag === "payRequest") {
             setLnurlp(response);
             setLoadingWallet(false);
@@ -127,6 +127,12 @@ export const Decoder = () => {
     }
   }, [lnurlw, lnurlp, lightningRequest, satAmount, navigate]);
 
+  useEffect(() => {
+    if (lnurlw && !lnurlp && !loadingWallet) {
+      onLnurlW();
+    }
+  }, [lnurlw, lnurlp, onLnurlW, loadingWallet]);
+
   const onLnurlP = useCallback(() => {
     if (lnurlp || bitcoinAddress) {
       if (satAmount) {
@@ -146,6 +152,12 @@ export const Decoder = () => {
       }
     }
   }, [requestInvoice, navigate, lnurlp, lnurlw, lightningRequest, satAmount, bitcoinAddress]);
+
+  useEffect(() => {
+    if (lnurlp && !lnurlw && !loadingWallet) {
+      onLnurlP();
+    }
+  }, [lnurlp, lnurlw, onLnurlP, loadingWallet]);
 
   useEffect(() => {
     if (error) {

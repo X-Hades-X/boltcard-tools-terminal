@@ -9,9 +9,8 @@ import {
 
 export const WalletPageContainer = styled(PageContainer).attrs(() => ({}))``;
 
-export const TitleText = styled(Text)`
-  color: ${({ theme }) => theme.colors.white};
-  text-align: center;
+export const ListItemWrapper = styled(View)`
+  padding: ${({ theme }) => `${theme.gridSize / 2}px ${theme.gridSize}px`};
 `;
 
 export const AmountText = styled(Text)`
@@ -28,16 +27,13 @@ export const SatAmountText = styled(Text)`
   text-align: center;
 `;
 
+export const SatAmountSpace = styled(Text)`
+    height: 22px;
+`;
+
 export const InfoText = styled(Text)`
   color: ${({ theme }) => theme.colors.white};
   text-align: left;
-  width: fit-content;
-  margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
-`;
-
-export const DescriptionText = styled(Text)`
-  color: ${({ theme }) => theme.colors.lightning};
-  text-align: center;
   width: fit-content;
   margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
 `;
@@ -64,11 +60,12 @@ export const WalletValueWrapper = styled(View)`
     flex-direction: row;
     align-items: center;
     justify-content: end;
-    width: 100%;
+    margin: 0 12px;
 `;
 
 export const WalletComponentStack = styled(ComponentStack)`
-  align-items: center;
+    margin-top: 42px;
+    align-items: center;
 `;
 
 export const CurrencySelection = styled(SelectField)`

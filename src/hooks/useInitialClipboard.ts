@@ -49,13 +49,19 @@ export const useInitialClipboard = () => {
           onPress: () => {
             toast.hide(toastId);
             Clipboard.setString("");
-            navigate(`/invoice`, {
-              state: {
-                ...(lightningInvoice
-                  ? { lightningInvoice }
-                  : { bitcoinAddress, amount, label, message })
-              }
-            });
+            if(bitcoinAddress && !amount) {
+              navigate(`/wallet`, {
+                state: { bitcoinAddress }
+              });
+            } else {
+              navigate(`/invoice`, {
+                state: {
+                  ...(lightningInvoice
+                    ? { lightningInvoice }
+                    : { bitcoinAddress, amount, label, message })
+                }
+              });
+            }
           }
         });
       }
