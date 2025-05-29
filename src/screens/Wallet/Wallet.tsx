@@ -201,7 +201,7 @@ export const Wallet = () => {
           <>
           <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
             <S.ListItemWrapper>
-              <Text h2 weight={600} color={colors.white}>
+              <Text h3 weight={600} color={colors.white}>
                 {description ? description : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription || ''}
               </Text>
             </S.ListItemWrapper>

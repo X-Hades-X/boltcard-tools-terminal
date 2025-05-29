@@ -27,7 +27,7 @@ export const useInvoiceHandler = () => {
 
         if (isValid) {
           if(bitcoinAddress && !amount) {
-            navigate(`/decoder`, {
+            navigate(`/wallet`, {
               state: {bitcoinAddress: bitcoinAddress}
             });
           } else {
