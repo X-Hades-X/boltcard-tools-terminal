@@ -120,8 +120,14 @@ export const Invoice = () => {
   const [lnurlw, setLnurlw] = useState<LnurlWData>();
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
-  // TODO handle ln invoice without satoshis (Phoenix Wallet)
+  // TODO handle ln invoice without satoshis (Phoenix Wallet); backend needs to be able to handle it too
   const { satoshis } = decodedInvoice || {};
+
+  useEffect(() => {
+    if(decodedInvoice && !satoshis) {
+      toast.show(t("errors.noAmountInvoice"), { type: "error" });
+    }
+  }, [decodedInvoice, satoshis]);
 
   useEffect(() => {
     void setupNfc();

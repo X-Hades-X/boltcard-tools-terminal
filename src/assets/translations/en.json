@@ -64,7 +64,10 @@
       "paid": "Paid",
       "received": "Received",
       "returnToHome": "Return to Home",
-      "copiedToClipboard": "Copied Invoice to Clipboard"
+      "copiedToClipboard": "Copied Invoice to Clipboard",
+      "errors": {
+        "noAmountInvoice": "No amount in Lightning invoice"
+      }
     },
     "wallet": {
       "invoiceTitle": "Request invoice",
