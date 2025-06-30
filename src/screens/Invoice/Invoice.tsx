@@ -120,6 +120,7 @@ export const Invoice = () => {
   const [lnurlw, setLnurlw] = useState<LnurlWData>();
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
+  // TODO handle ln invoice without satoshis (Phoenix Wallet)
   const { satoshis } = decodedInvoice || {};
 
   useEffect(() => {

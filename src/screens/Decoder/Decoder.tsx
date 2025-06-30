@@ -85,8 +85,6 @@ export const Decoder = () => {
         if (response) {
           if (response.tag === "withdrawRequest") {
             setLnurlw(response);
-
-            const sats = response.maxWithdrawable / 1000;
             if (response.payLink) {
               callLnurl(response.payLink).then(payResponse => {
                 if (payResponse && payResponse.tag === "payRequest") {
@@ -97,19 +95,20 @@ export const Decoder = () => {
             } else {
               const onlyMaxWithdraw =
                 response.maxWithdrawable &&
-                (response.minWithdrawable === undefined || response.minWithdrawable === response.maxWithdrawable);
+                (!response.minWithdrawable || response.minWithdrawable === response.maxWithdrawable);
               if (onlyMaxWithdraw) {
-                // this can be swiped
-                navigate(`/invoice`, {
-                  state: { message: response.defaultDescription, withdrawInvoice: response, withdrawAmount: sats }
-                });
+                setSatAmount(response.maxWithdrawable / 1000);
               }
-
-              setSatAmount(sats);
               setLoadingWallet(false);
             }
           } else if (response.tag === "payRequest") {
             setLnurlp(response);
+            const onlyMinSend =
+              response.minSendable &&
+              (!response.maxSendable || response.maxSendable === response.minSendable);
+            if(onlyMinSend) {
+              setSatAmount(response.minSendable / 1000);
+            }
             setLoadingWallet(false);
           }
         }
@@ -118,29 +117,24 @@ export const Decoder = () => {
   }, [nfcMessage]);
 
   const onLnurlW = useCallback(() => {
-    if (lnurlw) {
+    if (!loadingWallet && lnurlw) {
       if(satAmount) {
         navigate(`/invoice`, {
           state: { message: lnurlw.defaultDescription, withdrawInvoice: lnurlw, withdrawAmount: satAmount }
         });
-      }else {
+      } else {
         navigate(`/wallet`, {
           state: { description: lnurlw.defaultDescription ?? lightningRequest, lnurlw, isCard: !!lnurlp && !!lnurlw }
         });
       }
     }
-  }, [lnurlw, lnurlp, lightningRequest, satAmount, navigate]);
-
-  useEffect(() => {
-    if (lnurlw && !lnurlp && !loadingWallet) {
-      onLnurlW();
-    }
-  }, [lnurlw, lnurlp, onLnurlW, loadingWallet]);
+  }, [lnurlw, lnurlp, lightningRequest, satAmount, navigate, loadingWallet]);
 
   const onLnurlP = useCallback(() => {
-    if (lnurlp || bitcoinAddress) {
+    if (!loadingWallet && (lnurlp || bitcoinAddress)) {
       if (satAmount) {
         if (lnurlp) {
+          setLoadingWallet(true);
           requestInvoice(lnurlp, satAmount).then(pr => {
             navigate(`/invoice`, { state: { lightningInvoice: pr } });
           });
@@ -155,13 +149,17 @@ export const Decoder = () => {
         });
       }
     }
-  }, [requestInvoice, navigate, lnurlp, lnurlw, lightningRequest, satAmount, bitcoinAddress]);
+  }, [requestInvoice, navigate, lnurlp, lnurlw, lightningRequest, satAmount, bitcoinAddress, loadingWallet]);
 
   useEffect(() => {
-    if (lnurlp && !lnurlw && !loadingWallet) {
-      onLnurlP();
+    if (!loadingWallet) {
+      if(lnurlw && !lnurlp) {
+        onLnurlW();
+      } else if (lnurlp && !lnurlw) {
+        onLnurlP();
+      }
     }
-  }, [lnurlp, lnurlw, onLnurlP, loadingWallet]);
+  }, [lnurlw, lnurlp, onLnurlW, onLnurlP, loadingWallet]);
 
   useEffect(() => {
     if (error) {
@@ -174,12 +172,12 @@ export const Decoder = () => {
     <>
       {(isNfcScanning || loadingWallet) && <AnimatedLinearGradient customColors={gradiantColors} speed={6000} />}
       <S.DecoderPageContainer>
-        {!(isNfcScanning || loadingWallet) && (lnurlw || lnurlp || bitcoinAddress) ? (
+        {lnurlw && lnurlp ? (
           <S.DecoderComponentStack>
             <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
               <S.ListItemWrapper>
                 <Text h2 weight={600} color={colors.white}>
-                  {lightningRequest ? lightningRequest : bitcoinAddress ? bitcoinAddress : lnurlw?.defaultDescription}
+                  {lightningRequest ? lightningRequest : lnurlw?.defaultDescription}
                 </Text>
               </S.ListItemWrapper>
 
@@ -193,7 +191,7 @@ export const Decoder = () => {
 
               {showInfo && (
                 <>
-                  {(lnurlp || bitcoinAddress) && (
+                  {lnurlp && (
                     <S.ListItemWrapper>
                       <Text h3 weight={600} color={colors.lightning}>
                         {t(!lnurlw ? "send" : "receive")}
@@ -240,7 +238,7 @@ export const Decoder = () => {
             </ComponentStack>
             <S.DecoderSpacerStack/>
             <S.DecoderBottomView>
-              {(lnurlp || bitcoinAddress) && (
+              {lnurlp && (
                   <Button
                     isRound
                     size="smallCircle"
