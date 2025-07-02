@@ -16,38 +16,48 @@ export const useRates = () => {
   const [rates, setRates] =
     useState<{ [k in string]: { [key in string]: number } }>();
   const [currentRate, setCurrentRate] = useState<Rate>(satCurrency);
+  const [loading, setLoading] = useState(false);
 
   const getRate = useCallback((currencyShort: string) => {
-    let newRate = satCurrency;
-    if (currencyShort === "SAT") {
-      newRate = satCurrency;
-    } else if (currencyShort === "BTC") {
-      newRate = coinCurrency;
-    } else if (rates && "BTC" + currencyShort in rates && "BTC" in rates["BTC" + currencyShort]) {
-      newRate = { label: currencyShort, value: rates["BTC" + currencyShort].BTC * COIN };
-    }
-    return newRate;
+      let newRate = satCurrency;
+      if (currencyShort === "SAT") {
+        newRate = satCurrency;
+      } else if (currencyShort === "BTC") {
+        newRate = coinCurrency;
+      } else if (rates && "BTC" + currencyShort in rates && "BTC" in rates["BTC" + currencyShort]) {
+        newRate = { label: currencyShort, value: rates["BTC" + currencyShort].BTC * COIN };
+      }
+      return newRate;
   }, [rates]);
 
   useEffect(() => {
-    (async () => {
+    const updateCurrentRate = async () => {
+      const storedRate = await AsyncStorage.getItem("@rate");
+      if (storedRate) {
+        setCurrentRate(getRate(storedRate));
+      }
+    };
+    if (rates) {
+      void updateCurrentRate();
+    }
+  }, [rates, getRate]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
       try {
         const { data: getRatesData } = await axios.get<{
           data: typeof rates;
         }>("https://api.opennode.com/v1/rates");
         setRates(getRatesData.data);
-
-        // 2️⃣ Load preferred currency
-        const storedRate = await AsyncStorage.getItem("@rate");
-        if (storedRate) {
-          const rate = getRate(storedRate);
-          setCurrentRate(rate);
-        }
       } catch (e) {
         toast.show(t("unableGetRates"), { type: "error" });
+      } finally {
+        setLoading(false);
       }
-    })();
-  }, [getRate]);
+    };
+    void load();
+  }, []);
 
   const updateCurrentRate = useCallback(async (rate: Rate) => {
     await AsyncStorage.setItem("@rate", rate.label);
@@ -58,5 +68,5 @@ export const useRates = () => {
     return satoshis ? Math.ceil(satoshis / rate.value * 100) / 100 : undefined;
   }, []);
 
-  return { rates, getRate, currentRate, updateCurrentRate, getFiatAmount };
+  return { rates, getRate, currentRate, updateCurrentRate, getFiatAmount, loading };
 };

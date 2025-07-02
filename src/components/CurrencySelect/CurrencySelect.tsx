@@ -12,12 +12,16 @@ type CurrencySelectProps = {
 export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>(
   ({onChange}, ref) => {
 
-    const { rates, getRate, currentRate, updateCurrentRate } = useRates();
+    const { rates, getRate, currentRate, updateCurrentRate, loading } = useRates();
     const [rateItems, setRateItems] = useState<ItemProps[]>([]);
 
     const onRateChanged = (currencyShort: string) => {
       void updateCurrentRate(getRate(currencyShort));
     };
+
+    const getValue = () => {
+      return rateItems.find((i) => i.value === currentRate.label)?.value || ""
+    }
 
     useEffect(() => {
       if (rates !== undefined) {
@@ -39,16 +43,19 @@ export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>
 
     return (
       <S.Field
-        value={rateItems.find((i) => i.value === currentRate.label)?.value || ""}
+        value={loading ? "" : getValue()}
         paddingTop={0}
         defaultLeft={4}
         component={
+        <>
+          {(loading || getValue() === "") && <S.Spinner />}
           <S.Picker
             ref={ref}
             selectedValue={`${currentRate.label}`}
             onValueChange={(val)=>onRateChanged(`${val}`)}
             items={rateItems}
           />
+        </>
         }
       />
     );

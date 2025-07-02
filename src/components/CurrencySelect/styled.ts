@@ -1,10 +1,15 @@
 import styled from "styled-components";
 import { BaseField, Picker as RootPicker } from "@components";
+import { ActivityIndicator } from "react-native";
 
 
 export const Field = styled(BaseField)`
     width: 55px;
     background-color: ${({ theme }) => theme.colors.white}
+`;
+
+export const Spinner = styled(ActivityIndicator)`
+    left: -15px;
 `;
 
 export const Picker = styled(RootPicker)`
