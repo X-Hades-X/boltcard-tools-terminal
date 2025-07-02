@@ -85,7 +85,8 @@ export const Invoice = () => {
   } = useInvoiceCallback();
   const {
     rates,
-    getRate
+    currentRate,
+    getFiatAmount
   } = useRates();
 
   const {
@@ -235,24 +236,16 @@ export const Invoice = () => {
 
   useEffect(() => {
     if (rates) {
-      void loadRate();
+      void calculateFiatFromCurrentRate();
     }
   }, [amount, satoshis, withdrawAmount, rates]);
 
-  const getFiatAmount = useCallback((currentRate: { label: string, value: number }, sats?: number)=>{
-    return sats ? Math.ceil(sats / currentRate.value * 100) / 100 : undefined
-  }, []);
-
-  const loadRate = useCallback(async () => {
-    const storedRate = await AsyncStorage.getItem("@rate");
-    if (storedRate) {
-      const currentRate = getRate(storedRate);
-      if (currentRate.label !== "SAT" && currentRate.label !== "BTC") {
-        setFiat(currentRate.label);
-        setFiatAmount(getFiatAmount(currentRate, satoshis ? satoshis : amount ? amount : withdrawAmount));
-      }
+  const calculateFiatFromCurrentRate = useCallback(() => {
+    if (currentRate && currentRate.label !== "SAT" && currentRate.label !== "BTC") {
+      setFiat(currentRate.label);
+      setFiatAmount(getFiatAmount(currentRate, satoshis ?? amount ?? withdrawAmount));
     }
-  }, [satoshis, amount, withdrawAmount, getRate, getFiatAmount]);
+  }, [satoshis, amount, withdrawAmount, currentRate, getFiatAmount]);
 
   const onCopyToClipboard = useCallback(() => {
     if (lightningInvoice || swapLightningInvoice) {

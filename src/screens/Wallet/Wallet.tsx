@@ -13,7 +13,6 @@ import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numbe
 import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faInfo } from "@fortawesome/free-solid-svg-icons";
 import { CurrencySelect } from "@components/CurrencySelect";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type WalletRequest = {
   bitcoinAddress?: string;
@@ -36,9 +35,7 @@ export const Wallet = () => {
     error
   } = useInvoiceCallback();
   const {
-    rates,
-    getRate,
-    satCurrency
+    currentRate
   } = useRates();
 
   const {
@@ -57,16 +54,12 @@ export const Wallet = () => {
   const [pinRequired, setPinRequired] = useState<boolean>(false);
   const [withdraw, setWithdraw] = useState<LnurlWData>();
 
-  const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
-
   useEffect(() => {
     if (withdraw && satAmount) {
       navigate(`/invoice`, {
         state: currentRate.label !== "SAT" ?
           {
             withdrawInvoice: withdraw,
-            fiat: currentRate.label,
-            fiatAmount: numAmount,
             withdrawAmount: satAmount,
             withdrawPin: pin
           } :
@@ -74,20 +67,6 @@ export const Wallet = () => {
       });
     }
   }, [withdraw, satAmount, numAmount, currentRate, pin]);
-
-
-  useEffect(() => {
-    if (rates) {
-      void loadRate();
-    }
-  }, [rates]);
-
-  const loadRate = useCallback(async () => {
-    const storedRate = await AsyncStorage.getItem("@rate");
-    if (storedRate) {
-      setCurrentRate(getRate(storedRate));
-    }
-  }, [getRate]);
 
   const onLnurlW = useCallback(() => {
     if (lnurlw && satAmount) {
@@ -207,9 +186,7 @@ export const Wallet = () => {
                 <S.AmountText h1>
                   {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
                 </S.AmountText>
-                <CurrencySelect onChange={(rate) => {
-                  setCurrentRate(rate);
-                }}/>
+                <CurrencySelect/>
               </S.WalletValueWrapper>
               {currentRate.label !== "SAT" ? (
                 <S.SatAmountText h4>

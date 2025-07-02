@@ -2,7 +2,6 @@ import { forwardRef, useEffect, useState } from "react";
 import * as S from "./styled";
 import { useRates } from "@hooks";
 import { ItemProps } from "@components/Picker/Picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ItemValue, Picker } from "@react-native-picker/picker/typings/Picker";
 
 
@@ -13,20 +12,11 @@ type CurrencySelectProps = {
 export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>(
   ({onChange}, ref) => {
 
-    const { rates, getRate, satCurrency } = useRates();
+    const { rates, getRate, currentRate, updateCurrentRate } = useRates();
     const [rateItems, setRateItems] = useState<ItemProps[]>([]);
-    const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
-    const loadData = async () => {
-      const storedRate = await AsyncStorage.getItem("@rate");
-      if (storedRate) {
-        setCurrentRate(getRate(storedRate));
-      }
-    };
-
-    const onRateChanged = async (currencyShort: string) => {
-      await AsyncStorage.setItem("@rate", currencyShort);
-      setCurrentRate(getRate(currencyShort));
+    const onRateChanged = (currencyShort: string) => {
+      void updateCurrentRate(getRate(currencyShort));
     };
 
     useEffect(() => {
@@ -40,7 +30,6 @@ export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>
           }
         }
         setRateItems(ratesAsItems);
-        void loadData();
       }
     }, [rates]);
 
