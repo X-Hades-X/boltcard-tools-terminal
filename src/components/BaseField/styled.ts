@@ -29,15 +29,18 @@ export const BaseFieldContainer = styled(View)<{
   flex-direction: row;
 `;
 
-export const ValueText = styled(Text)`
+export const ValueText = styled(Text)<{
+  paddingTop?: number,
+  defaultLeft?: number
+}>`
   text-align-vertical: center;
-  padding-top: 8px;
+  padding-top: ${props => props.paddingTop ?? 8}px;
   align-items: center;
   display: flex;
   flex: 1;
   height: 100%;
-  left: ${HORIZONTAL_PADDING + DEFAULT_LEFT}px;
-  right: ${HORIZONTAL_PADDING + DEFAULT_LEFT}px;
+  left: ${props => (props.defaultLeft ?? DEFAULT_LEFT) + HORIZONTAL_PADDING}px;
+  right: ${props => (props.defaultLeft ?? DEFAULT_LEFT) + HORIZONTAL_PADDING}px;
   font-family: Poppins-Medium;
   background-color: transparent;
   font-size: 16px;

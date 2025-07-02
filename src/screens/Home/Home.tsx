@@ -9,7 +9,8 @@ import { PlaceholderPresets } from "@components/QRCamera/data";
 import { useInitialClipboard, useVersionTag } from "@hooks";
 import { platform } from "@config";
 import * as S from "./styled";
-import { useEffect, useState } from "react";
+import {  useEffect, useState } from "react";
+import { CurrencySelect } from "@components/CurrencySelect";
 
 const { getIsNfcSupported } = platform;
 
@@ -37,6 +38,7 @@ export const Home = () => {
             <S.TitleText h3 weight={700}>
               BoltCard Tools Terminal
             </S.TitleText>
+            <CurrencySelect/>
           </ComponentStack>
           <S.IntroText h4 centered weight={600}>
             {t("intro")}

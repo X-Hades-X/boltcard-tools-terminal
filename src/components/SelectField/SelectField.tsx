@@ -12,7 +12,6 @@ type PickerProps = Omit<
 
 type SelectFieldProps = PickerProps & {
   onChange?: (event: { nativeEvent: { text: ItemValue } }) => void;
-  showValue?: boolean;
 } & Pick<
     BaseFieldProps,
     "value" | "label" | "left" | "right" | "error" | "disabled"
@@ -30,7 +29,6 @@ export const SelectField = forwardRef<Picker<ItemValue>, SelectFieldProps>(
       onChange,
       onFocus,
       onBlur,
-      showValue,
       ...props
     },
     ref
@@ -45,7 +43,7 @@ export const SelectField = forwardRef<Picker<ItemValue>, SelectFieldProps>(
     return (
       <BaseField
         style={style}
-        value={showValue ? props.items.find((i) => i.value === value)?.value || "" : props.items.find((i) => i.value === value)?.label || ""}
+        value={props.items.find((i) => i.value === value)?.label || ""}
         label={label !== undefined ? label : ""}
         disabled={props.disabled}
         left={left}

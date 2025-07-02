@@ -1,19 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
 import { ComponentStack, PinPad, Text, View } from "@components";
-import { useInvoiceCallback, useRates } from "@hooks";
+import { useInvoiceCallback } from "@hooks";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTheme } from "styled-components";
 import * as S from "./styled";
 import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 // @ts-ignore
-import { ItemProps } from "@components/Picker/Picker";
 import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
-import { theme } from "@config/themes";
 import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faInfo } from "@fortawesome/free-solid-svg-icons";
+import { CurrencySelect, satCurrency } from "@components/CurrencySelect";
 
 type WalletRequest = {
   bitcoinAddress?: string;
@@ -23,9 +22,6 @@ type WalletRequest = {
   isCard?: boolean;
 };
 
-const COIN = 100000000;
-const satCurrency = { label: "SAT", value: 1 };
-const coinCurrency = { label: "BTC", value: COIN };
 const minLoopOut = 1000;
 
 export const Wallet = () => {
@@ -55,8 +51,6 @@ export const Wallet = () => {
   const [pinRequired, setPinRequired] = useState<boolean>(false);
   const [withdraw, setWithdraw] = useState<LnurlWData>();
 
-  const rates = useRates();
-  const [rateItems, setRateItems] = useState<ItemProps[]>([]);
   const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
   useEffect(() => {
@@ -74,32 +68,6 @@ export const Wallet = () => {
       });
     }
   }, [withdraw, satAmount, numAmount, currentRate, pin]);
-
-  useEffect(() => {
-    if (rates !== undefined) {
-      const ratesAsItems = [{ label: "SAT - Satoshi", value: "SAT" }, { label: "BTC - Bitcoin", value: "BTC" }];
-      for (const pair in rates) {
-        const currentPair = rates[pair];
-        const currencyShort = Object.keys(currentPair).filter(key => key !== "currency" && key !== "BTC").pop();
-        if ("currency" in currentPair && currencyShort) {
-          ratesAsItems.push({ label: `${currencyShort} - ${currentPair.currency}`, value: currencyShort });
-        }
-      }
-      setRateItems(ratesAsItems);
-    }
-  }, [rates]);
-
-  const onRateChange = useCallback((currencyShort: string) => {
-    let newRate = satCurrency;
-    if (currencyShort === "SAT") {
-      newRate = satCurrency;
-    } else if (currencyShort === "BTC") {
-      newRate = coinCurrency;
-    } else if (rates && "BTC" + currencyShort in rates && "BTC" in rates["BTC" + currencyShort]) {
-      newRate = { label: currencyShort, value: rates["BTC" + currencyShort].BTC * COIN };
-    }
-    setCurrentRate(newRate);
-  }, [rates]);
 
   const onLnurlW = useCallback(() => {
     if (lnurlw && satAmount) {
@@ -219,10 +187,9 @@ export const Wallet = () => {
                 <S.AmountText h1>
                   {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
                 </S.AmountText>
-                <S.CurrencySelection showValue={true} value={currentRate.label} items={rateItems}
-                                     onChange={(val) => onRateChange(`${val.nativeEvent.text}`)}
-                                     style={{backgroundColor: theme.colors.greyLight}}
-                />
+                <CurrencySelect onChange={(rate) => {
+                  setCurrentRate(rate);
+                }}/>
               </S.WalletValueWrapper>
               {currentRate.label !== "SAT" ? (
                 <S.SatAmountText h4>

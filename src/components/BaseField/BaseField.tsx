@@ -37,6 +37,8 @@ export type BaseFieldProps<T extends FieldProps = FieldProps> = {
   onBlur?: T["onBlur"];
   testID?: string;
   asListAction?: boolean;
+  paddingTop?: number;
+  defaultLeft?: number;
 } & Omit<StyledComponentComponentProps<typeof S.BaseFieldContainer>, "error">;
 
 export const BaseField = <T extends FieldProps>({
@@ -47,6 +49,8 @@ export const BaseField = <T extends FieldProps>({
   right,
   disabled,
   error,
+  paddingTop,
+  defaultLeft,
   isDefaultFocused = false,
   onFocus: propsOnFocus,
   onBlur: propsOnBlur,
@@ -98,7 +102,7 @@ export const BaseField = <T extends FieldProps>({
         />
       )}
       {typeof value === "string" && (
-        <S.ValueText numberOfLines={2}>{value}</S.ValueText>
+        <S.ValueText paddingTop={paddingTop} defaultLeft={defaultLeft} numberOfLines={2}>{value}</S.ValueText>
       )}
       {left && (
         <S.BadgeContainer>

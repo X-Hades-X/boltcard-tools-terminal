@@ -76,7 +76,3 @@ export const WalletComponentStack = styled(ComponentStack)`
     align-items: center;
     flex: 1;
 `;
-
-export const CurrencySelection = styled(SelectField)`
-  width: 65px;
-`;
