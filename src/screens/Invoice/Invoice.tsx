@@ -22,7 +22,7 @@ import {
 import addDays from "date-fns/addDays";
 import intlFormat from "date-fns/intlFormat";
 import bolt11, { PaymentRequestObject } from "bolt11";
-import { useNfc, useInvoiceCallback } from "@hooks";
+import { useNfc, useInvoiceCallback, useRates } from "@hooks";
 import { XOR } from "ts-essentials";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -37,6 +37,7 @@ import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 import QRCode from "react-native-qrcode-svg";
 import { Clipboard } from "@utils";
 import { useToast } from "react-native-toast-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type InvoiceState = XOR<
   {
@@ -82,6 +83,10 @@ export const Invoice = () => {
     isPaySuccess,
     error
   } = useInvoiceCallback();
+  const {
+    rates,
+    getRate
+  } = useRates();
 
   const {
     lightningInvoice: stateLightningInvoice,
@@ -91,9 +96,7 @@ export const Invoice = () => {
     bitcoinAddress,
     amount,
     label,
-    message,
-    fiat,
-    fiatAmount
+    message
   } = location.state || {};
 
   const [swapLightningInvoice, setSwapLightningInvoice] = useState<string>();
@@ -120,11 +123,14 @@ export const Invoice = () => {
   const [lnurlw, setLnurlw] = useState<LnurlWData>();
   const [lnurlp, setLnurlp] = useState<LnurlPData>();
 
+  const [fiat, setFiat] = useState<string>();
+  const [fiatAmount, setFiatAmount] = useState<number>();
+
   // TODO handle ln invoice without satoshis (Phoenix Wallet); backend needs to be able to handle it too
   const { satoshis } = decodedInvoice || {};
 
   useEffect(() => {
-    if(decodedInvoice && !satoshis) {
+    if (decodedInvoice && !satoshis) {
       toast.show(t("errors.noAmountInvoice"), { type: "error" });
     }
   }, [decodedInvoice, satoshis]);
@@ -227,6 +233,27 @@ export const Invoice = () => {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (rates) {
+      void loadRate();
+    }
+  }, [amount, satoshis, withdrawAmount, rates]);
+
+  const getFiatAmount = useCallback((currentRate: { label: string, value: number }, sats?: number)=>{
+    return sats ? Math.ceil(sats / currentRate.value * 100) / 100 : undefined
+  }, []);
+
+  const loadRate = useCallback(async () => {
+    const storedRate = await AsyncStorage.getItem("@rate");
+    if (storedRate) {
+      const currentRate = getRate(storedRate);
+      if (currentRate.label !== "SAT" && currentRate.label !== "BTC") {
+        setFiat(currentRate.label);
+        setFiatAmount(getFiatAmount(currentRate, satoshis ? satoshis : amount ? amount : withdrawAmount));
+      }
+    }
+  }, [satoshis, amount, withdrawAmount, getRate, getFiatAmount]);
+
   const onCopyToClipboard = useCallback(() => {
     if (lightningInvoice || swapLightningInvoice) {
       Clipboard.setString((lightningInvoice ? lightningInvoice : swapLightningInvoice) as string);
@@ -304,7 +331,8 @@ export const Invoice = () => {
                   onPress: () => {
                     void onReturnToHome();
                   }
-                }} : {}
+                }
+              } : {}
         : {})}
       isContentVerticallyCentered={isPaySuccess}
     >
@@ -441,10 +469,10 @@ export const Invoice = () => {
           setPin(value);
           setPinConfirmed(true);
         }}
-        onClose={() => {
-          setPinRequired(false);
-          void setupNfc();
-        }}/>
+                onClose={() => {
+                  setPinRequired(false);
+                  void setupNfc();
+                }} />
       ) : (lightningInvoice || swapLightningInvoice || withdrawInvoice) ? (
         <S.QrCodeComponentStack>
           <Loader

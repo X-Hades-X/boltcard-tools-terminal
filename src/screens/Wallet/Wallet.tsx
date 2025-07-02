@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "@components/Router";
 import { ComponentStack, PinPad, Text, View } from "@components";
-import { useInvoiceCallback } from "@hooks";
+import { useInvoiceCallback, useRates } from "@hooks";
 import { ThemeContext } from "@config";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTheme } from "styled-components";
@@ -12,7 +12,8 @@ import { NumPad } from "@components/NumPad";
 import { getNumberWithSpaces, getNumberWithSpacesFromString } from "@utils/numberWithSpaces";
 import { ListItem } from "@components/ItemsList/components/ListItem";
 import { faInfo } from "@fortawesome/free-solid-svg-icons";
-import { CurrencySelect, satCurrency } from "@components/CurrencySelect";
+import { CurrencySelect } from "@components/CurrencySelect";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type WalletRequest = {
   bitcoinAddress?: string;
@@ -34,6 +35,11 @@ export const Wallet = () => {
     requestInvoice,
     error
   } = useInvoiceCallback();
+  const {
+    rates,
+    getRate,
+    satCurrency
+  } = useRates();
 
   const {
     bitcoinAddress,
@@ -68,6 +74,20 @@ export const Wallet = () => {
       });
     }
   }, [withdraw, satAmount, numAmount, currentRate, pin]);
+
+
+  useEffect(() => {
+    if (rates) {
+      void loadRate();
+    }
+  }, [rates]);
+
+  const loadRate = useCallback(async () => {
+    const storedRate = await AsyncStorage.getItem("@rate");
+    if (storedRate) {
+      setCurrentRate(getRate(storedRate));
+    }
+  }, [getRate]);
 
   const onLnurlW = useCallback(() => {
     if (lnurlw && satAmount) {

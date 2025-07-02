@@ -1,13 +1,10 @@
-import { forwardRef, useCallback, useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import * as S from "./styled";
 import { useRates } from "@hooks";
 import { ItemProps } from "@components/Picker/Picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ItemValue, Picker } from "@react-native-picker/picker/typings/Picker";
 
-const COIN = 100000000;
-export const satCurrency = { label: "SAT", value: 1 };
-const coinCurrency = { label: "BTC", value: COIN };
 
 type CurrencySelectProps = {
   onChange?: (event: { label: string, value: number }) => void;
@@ -16,7 +13,7 @@ type CurrencySelectProps = {
 export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>(
   ({onChange}, ref) => {
 
-    const rates = useRates();
+    const { rates, getRate, satCurrency } = useRates();
     const [rateItems, setRateItems] = useState<ItemProps[]>([]);
     const [currentRate, setCurrentRate] = useState<{ label: string, value: number }>(satCurrency);
 
@@ -50,18 +47,6 @@ export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>
     useEffect(() => {
       onChange?.(currentRate);
     }, [currentRate]);
-
-    const getRate = useCallback((currencyShort: string) => {
-      let newRate = satCurrency;
-      if (currencyShort === "SAT") {
-        newRate = satCurrency;
-      } else if (currencyShort === "BTC") {
-        newRate = coinCurrency;
-      } else if (rates && "BTC" + currencyShort in rates && "BTC" in rates["BTC" + currencyShort]) {
-        newRate = { label: currencyShort, value: rates["BTC" + currencyShort].BTC * COIN };
-      }
-      return newRate;
-    }, [rates]);
 
     return (
       <S.Field
