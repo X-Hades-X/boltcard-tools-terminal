@@ -51,13 +51,6 @@ export const useRates = () => {
           data: typeof rates;
         }>("https://api.opennode.com/v1/rates");
         setRates(getRatesData.data);
-
-        // 2️⃣ Load preferred currency
-        const storedRate = await AsyncStorage.getItem("@rate");
-        if (storedRate) {
-          const rate = getRate(storedRate);
-          setCurrentRate(rate);
-        }
       } catch (e) {
         toast.show(t("unableGetRates"), { type: "error" });
       } finally {
