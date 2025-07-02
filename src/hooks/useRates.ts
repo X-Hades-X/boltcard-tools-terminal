@@ -16,6 +16,7 @@ export const useRates = () => {
   const [rates, setRates] =
     useState<{ [k in string]: { [key in string]: number } }>();
   const [currentRate, setCurrentRate] = useState<Rate>(satCurrency);
+  const [loading, setLoading] = useState(false);
 
   const getRate = useCallback((currencyShort: string) => {
     let newRate = satCurrency;
@@ -29,8 +30,22 @@ export const useRates = () => {
     return newRate;
   }, [rates]);
 
+  const loadCurrentRate = useCallback(async () => {
+    const storedRate = await AsyncStorage.getItem("@rate");
+    if (storedRate) {
+      setCurrentRate(getRate(storedRate));
+    }
+  }, [getRate]);
+
+  useEffect(() => {
+    if(rates) {
+      void loadCurrentRate();
+    }
+  }, [rates]);
+
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
         const { data: getRatesData } = await axios.get<{
           data: typeof rates;
@@ -45,18 +60,23 @@ export const useRates = () => {
         }
       } catch (e) {
         toast.show(t("unableGetRates"), { type: "error" });
+      } finally {
+        setLoading(false);
       }
     })();
-  }, [getRate]);
+  }, []);
 
   const updateCurrentRate = useCallback(async (rate: Rate) => {
     await AsyncStorage.setItem("@rate", rate.label);
     setCurrentRate(rate);
   }, []);
 
-  const getFiatAmount = useCallback((rate: Rate, satoshis?: number) => {
-    return satoshis ? Math.ceil(satoshis / rate.value * 100) / 100 : undefined;
-  }, []);
+  const getFiatAmount = useCallback((satoshis?: number) => {
+    if(currentRate.label !== "SAT" && currentRate.label !== "BTC") {
+      return satoshis ? Math.ceil(satoshis / currentRate.value * 100) / 100 : undefined;
+    }
+    return undefined;
+  }, [currentRate]);
 
-  return { rates, getRate, currentRate, updateCurrentRate, getFiatAmount };
+  return { rates, getRate, currentRate, updateCurrentRate, getFiatAmount, loading };
 };

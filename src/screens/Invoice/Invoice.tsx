@@ -86,7 +86,7 @@ export const Invoice = () => {
   const {
     rates,
     currentRate,
-    getFiatAmount
+    getFiatAmount,
   } = useRates();
 
   const {
@@ -238,12 +238,12 @@ export const Invoice = () => {
     if (rates) {
       void calculateFiatFromCurrentRate();
     }
-  }, [amount, satoshis, withdrawAmount, rates]);
+  }, [amount, satoshis, withdrawAmount, currentRate, rates]);
 
   const calculateFiatFromCurrentRate = useCallback(() => {
-    if (currentRate && currentRate.label !== "SAT" && currentRate.label !== "BTC") {
+    if (currentRate) {
       setFiat(currentRate.label);
-      setFiatAmount(getFiatAmount(currentRate, satoshis ?? amount ?? withdrawAmount));
+      setFiatAmount(getFiatAmount(satoshis ?? amount ?? withdrawAmount));
     }
   }, [satoshis, amount, withdrawAmount, currentRate, getFiatAmount]);
 
