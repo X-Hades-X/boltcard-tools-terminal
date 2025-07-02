@@ -9,8 +9,26 @@ export const useInvoiceHandler = () => {
   const toast = useToast();
   const { t } = useTranslation();
 
+  // I have no idea why, but it is just impossible to get searchParams from new URL(url) somehow
+  const getQueryParam = useCallback((url: string, key: string)=> {
+    const queryString = url.split('?')[1] || '';
+    const pairs = queryString.split('&');
+    for (const pair of pairs) {
+      const [k, v] = pair.split('=');
+      if (k === key) return decodeURIComponent(v || '');
+    }
+    return null;
+  }, []);
+
   const invoiceHandler = useCallback(
     (value: string) => {
+
+      // OpenCryptoPay (and probably others) provide QR codes that contain a URL with lightning param
+      // TODO OpenCryptoPay has an api call that provides the fiat value; could be supported in a later release
+      if(value.toLowerCase().startsWith("http")) {
+        value = getQueryParam(value, "lightning") || value
+      }
+
       if (value.toLowerCase().indexOf("lnurl") >= 0 || value.indexOf("@") >= 0) {
         navigate(`/decoder`, {
           state: {lightningRequest: value}
