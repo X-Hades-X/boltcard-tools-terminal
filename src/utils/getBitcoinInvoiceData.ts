@@ -39,7 +39,7 @@ export const getBitcoinInvoiceData = (value: string) => {
 
   const isValid =
     !!lightningInvoice ||
-    validateBitcoinAddress(bitcoinAddress || "");
+    (validateBitcoinAddress(bitcoinAddress || ""));
 
   return {
     lightningInvoice,

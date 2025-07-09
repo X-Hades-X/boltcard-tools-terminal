@@ -44,8 +44,6 @@ export const CurrencySelect = forwardRef<Picker<ItemValue>, CurrencySelectProps>
     return (
       <S.Field
         value={loading ? "" : getValue()}
-        paddingTop={0}
-        defaultLeft={4}
         component={
         <>
           {(loading || getValue() === "") && <S.Spinner />}

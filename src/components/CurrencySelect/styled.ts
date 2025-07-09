@@ -4,7 +4,6 @@ import { ActivityIndicator } from "react-native";
 
 
 export const Field = styled(BaseField)`
-    width: 55px;
     background-color: ${({ theme }) => theme.colors.white}
 `;
 
@@ -17,9 +16,9 @@ export const Picker = styled(RootPicker)`
   opacity: 0;
   height: 100%;
   width: 100%;
-  border: 0px;
+  border: 0;
   background-color: transparent;
-  padding: 0px 12px;
+  padding: 0 12px;
   padding-top: 8px;
   font-size: 16px;
   font-family: Poppins-Medium;

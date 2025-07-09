@@ -32,6 +32,7 @@
       "scanInvoice": "Scan invoice",
       "nfcNotSupported": "NFC not supported",
       "moreAboutBoltCard": "More about BoltCard",
+      "defaultCurrencyLabel": "Default currency",
       "builtBy": "Built by",
       "walletMode": "Scan Bolt Card",
       "foundInvoiceClipboard": "Tap to read invoice from your clipboard",
@@ -66,7 +67,7 @@
       "returnToHome": "Return to Home",
       "copiedToClipboard": "Copied Invoice to Clipboard",
       "errors": {
-        "noAmountInvoice": "No amount in Lightning invoice"
+        "noAmountInvoice": "Lightning invoice has no amount"
       }
     },
     "wallet": {

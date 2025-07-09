@@ -1,1 +1,1 @@
-export { CurrencySelect, satCurrency } from "./CurrencySelect";
+export { CurrencySelect } from "./CurrencySelect";

@@ -39,7 +39,7 @@ type InvoiceResponse = XOR<InvoiceRequest, CallbackResponse>;
 
 export const useInvoiceCallback = () => {
   const toast = useToast();
-  const { t } = useTranslation(undefined, { keyPrefix: "errors" });
+  const { t } = useTranslation(undefined, { keyPrefix: "common" });
   const [error, setError] = useState<CallbackResponse>();
   const [isPaySuccess, setIsPaySuccess] = useState(false);
 

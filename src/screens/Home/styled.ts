@@ -33,6 +33,12 @@ export const MainComponentStack = styled(ComponentStack)`
   flex: 1;
 `;
 
+export const CurrencySelectComponentStack = styled(ComponentStack)`
+  width: 300px;
+  display: flex;
+  justify-content: space-between;
+`;
+
 export const BuiltByComponentStack = styled(ComponentStack)`
   align-items: center;
   justify-content: center;

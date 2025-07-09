@@ -3,8 +3,7 @@ import {
   View,
   Text,
   PageContainer,
-  ComponentStack,
-  SelectField
+  ComponentStack
 } from "@components";
 
 export const WalletPageContainer = styled(PageContainer).attrs(() => ({}))``;

@@ -37,7 +37,6 @@ import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 import QRCode from "react-native-qrcode-svg";
 import { Clipboard } from "@utils";
 import { useToast } from "react-native-toast-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type InvoiceState = XOR<
   {
@@ -133,6 +132,7 @@ export const Invoice = () => {
   useEffect(() => {
     if (decodedInvoice && !satoshis) {
       toast.show(t("errors.noAmountInvoice"), { type: "error" });
+      onReturnToHome();
     }
   }, [decodedInvoice, satoshis]);
 
@@ -324,8 +324,7 @@ export const Invoice = () => {
                   onPress: () => {
                     void onReturnToHome();
                   }
-                }
-              } : {}
+                }} : {}
         : {})}
       isContentVerticallyCentered={isPaySuccess}
     >
@@ -462,10 +461,10 @@ export const Invoice = () => {
           setPin(value);
           setPinConfirmed(true);
         }}
-                onClose={() => {
-                  setPinRequired(false);
-                  void setupNfc();
-                }} />
+        onClose={() => {
+          setPinRequired(false);
+          void setupNfc();
+        }}/>
       ) : (lightningInvoice || swapLightningInvoice || withdrawInvoice) ? (
         <S.QrCodeComponentStack>
           <Loader

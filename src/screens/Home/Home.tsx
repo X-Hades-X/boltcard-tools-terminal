@@ -38,7 +38,6 @@ export const Home = () => {
             <S.TitleText h3 weight={700}>
               BoltCard Tools Terminal
             </S.TitleText>
-            <CurrencySelect/>
           </ComponentStack>
           <S.IntroText h4 centered weight={600}>
             {t("intro")}
@@ -86,6 +85,12 @@ export const Home = () => {
             <S.BoltCardImage source={require("@assets/images/bolt-card.png")} />
           </S.BoltCardComponentStack>
         </S.MainComponentStack>
+        <S.CurrencySelectComponentStack direction={"horizontal"}>
+          <S.IntroText h3 weight={600}>
+            {t("defaultCurrencyLabel")}
+          </S.IntroText>
+          <CurrencySelect/>
+        </S.CurrencySelectComponentStack>
         <ComponentStack gapSize={12}>
           <S.BuiltByComponentStack
             gapSize={2}
