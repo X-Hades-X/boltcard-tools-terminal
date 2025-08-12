@@ -35,7 +35,8 @@ export const Wallet = () => {
     error
   } = useInvoiceCallback();
   const {
-    currentRate
+    currentRate,
+    updateCurrentRate,
   } = useRates();
 
   const {
@@ -53,6 +54,8 @@ export const Wallet = () => {
   const [pin, setPin] = useState<string>();
   const [pinRequired, setPinRequired] = useState<boolean>(false);
   const [withdraw, setWithdraw] = useState<LnurlWData>();
+
+  const [isInit, setIsInit] = useState(true);
 
   useEffect(() => {
     if (withdraw && satAmount) {
@@ -186,7 +189,13 @@ export const Wallet = () => {
                 <S.AmountText h1>
                   {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
                 </S.AmountText>
-                <CurrencySelect/>
+                <CurrencySelect onChange={event => {
+                  if(!isInit) {
+                    void updateCurrentRate(event);
+                  } else {
+                    setIsInit(false);
+                  }
+                }}/>
               </S.WalletValueWrapper>
               {currentRate.label !== "SAT" ? (
                 <S.SatAmountText h4>
