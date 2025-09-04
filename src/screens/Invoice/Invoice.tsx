@@ -197,7 +197,7 @@ export const Invoice = () => {
         if (lnurlw.pinLimit !== undefined) {
           //if the card has pin enabled
           //check the amount didn't exceed the limit
-          const limitSat = lnurlw.pinLimit;
+          const limitSat = lnurlw.pinLimit / 1000;
           if (limitSat <= satoshis) {
             setPinRequired(true);
           }

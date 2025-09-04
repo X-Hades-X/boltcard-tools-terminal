@@ -222,7 +222,7 @@ export const Decoder = () => {
                           <ListItem
                             title={t("pinLimit")}
                             icon={faLock}
-                            value={getNumberWithSpaces(lnurlw.pinLimit) + ' sats'}
+                            value={getNumberWithSpaces(lnurlw.pinLimit / 1000) + ' sats'}
                           />
                         )}
                         <ListItem

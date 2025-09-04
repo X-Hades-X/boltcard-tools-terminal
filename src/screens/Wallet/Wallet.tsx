@@ -75,7 +75,7 @@ export const Wallet = () => {
     if (lnurlw && satAmount) {
       setPin(undefined);
 
-      const isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit <= satAmount : false;
+      const isPinRequired = lnurlw.pinLimit ? lnurlw.pinLimit / 1000 <= satAmount : false;
       setPinRequired(isPinRequired);
       if (!isPinRequired) {
         setWithdraw(lnurlw);
@@ -230,7 +230,7 @@ export const Wallet = () => {
                 <S.WalletMinMaxWrapper>
                   {lnurlw.pinLimit &&
                     <S.InfoText>
-                      {t("pinLimit")}: {getNumberWithSpaces(lnurlw.pinLimit)}
+                      {t("pinLimit")}: {getNumberWithSpaces(lnurlw.pinLimit / 1000)}
                     </S.InfoText>
                   }
                   <S.InfoText>
