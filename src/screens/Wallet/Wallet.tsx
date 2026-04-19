@@ -117,8 +117,8 @@ export const Wallet = () => {
     }
 
     if(bitcoinAddress){
-      // TODO 1000 sats min amount to avoid users swapping out dust? (would still be kinda stupid)
-      return satAmount > minLoopOut;
+      // Minimum is inclusive: at least `minLoopOut` sats to avoid dust swaps.
+      return satAmount >= minLoopOut;
     } else if(lnurlw) {
       return satAmount <= lnurlw.maxWithdrawable / 1000 && satAmount >= lnurlw.minWithdrawable / 1000
     } else if(lnurlp) {
