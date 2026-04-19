@@ -19,10 +19,15 @@ export const getBitcoinInvoiceData = (value: string) => {
   if (value.toLowerCase().startsWith("lnbc")) {
     lightningInvoice = value.toLowerCase();
   } else if (validateBitcoinAddress(value)) {
-    // Base58 (P2PKH/P2SH) addresses are case-sensitive; do NOT lowercase.
-    bitcoinAddress = value;
+    // Bech32 (bc1.../tb1...) is defined lowercase; normalise case so
+    // downstream equality checks and QR encodings stay canonical.
+    // Base58 (P2PKH/P2SH) is case-sensitive and must stay as-is.
+    const lower = value.toLowerCase();
+    const isBech32 = /^(bc1|tb1|bcrt1)/i.test(value);
+    bitcoinAddress = isBech32 ? lower : value;
   } else if (validateBitcoinAddress(value.toLowerCase())) {
-    // Bech32 addresses are defined lowercase; accept mixed-case input.
+    // Fallback for bech32 addresses whose validator happened to be strict
+    // about case.
     bitcoinAddress = value.toLowerCase();
   } else {
     const parsedValue = qs.parse(

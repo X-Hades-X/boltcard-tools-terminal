@@ -8,7 +8,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "build": "NODE_ENV=production webpack --mode=production && rm public/index.html && cp -r public/. build/",
-    "test": "react-scripts test",
+    "test": "jest",
     "lint": "eslint ./ && tsc --noemit",
     "eject": "react-scripts eject",
     "postinstall": "patch-package",
