@@ -24,7 +24,6 @@ import { ListItem } from "@components/ItemsList/components/ListItem";
 
 type DecoderRequest = {
   lightningRequest?: string;
-  bitcoinAddress?: string;
 };
 
 export const Decoder = () => {
@@ -55,19 +54,14 @@ export const Decoder = () => {
   const [loadingWallet, setLoadingWallet] = useState<boolean>(false);
   const [showInfo, setShowInfo] = useState<boolean>(false);
 
-  const {
-    lightningRequest,
-    bitcoinAddress
-  } = location.state || {};
+  const { lightningRequest } = location.state || {};
 
   useEffect(() => {
     setBackgroundColor(colors.primary, 0);
-    if (bitcoinAddress) {
-      setLoadingWallet(false);
-    } else if (!lightningRequest) {
+    if (!lightningRequest) {
       void setupNfc();
     }
-  }, [lightningRequest]);
+  }, [lightningRequest, colors.primary, setBackgroundColor, setupNfc]);
 
   // Read NFC Message
   useEffect(() => {
@@ -131,25 +125,23 @@ export const Decoder = () => {
   }, [lnurlw, lnurlp, lightningRequest, satAmount, navigate, loadingWallet]);
 
   const onLnurlP = useCallback(() => {
-    if (!loadingWallet && (lnurlp || bitcoinAddress)) {
+    if (!loadingWallet && lnurlp) {
       if (satAmount) {
-        if (lnurlp) {
-          setLoadingWallet(true);
-          requestInvoice(lnurlp, satAmount).then(pr => {
-            navigate(`/invoice`, { state: { lightningInvoice: pr } });
-          });
-        } else if (bitcoinAddress) {
-          navigate(`/invoice`, {
-            state: { bitcoinAddress, amount: satAmount }
-          });
-        }
+        setLoadingWallet(true);
+        requestInvoice(lnurlp, satAmount).then(pr => {
+          navigate(`/invoice`, { state: { lightningInvoice: pr } });
+        });
       } else {
         navigate(`/wallet`, {
-          state: { description: lnurlw?.defaultDescription ?? lightningRequest, lnurlp, bitcoinAddress, isCard: !!lnurlp && !!lnurlw}
+          state: {
+            description: lnurlw?.defaultDescription ?? lightningRequest,
+            lnurlp,
+            isCard: !!lnurlp && !!lnurlw
+          }
         });
       }
     }
-  }, [requestInvoice, navigate, lnurlp, lnurlw, lightningRequest, satAmount, bitcoinAddress, loadingWallet]);
+  }, [requestInvoice, navigate, lnurlp, lnurlw, lightningRequest, satAmount, loadingWallet]);
 
   useEffect(() => {
     if (!loadingWallet) {
@@ -177,7 +169,7 @@ export const Decoder = () => {
             <ComponentStack gapSize={2} gapColor={colors.primaryLight}>
               <S.ListItemWrapper>
                 <Text h2 weight={600} color={colors.white}>
-                  {lightningRequest ? lightningRequest : lnurlw?.defaultDescription}
+                  {lnurlw?.defaultDescription || lightningRequest}
                 </Text>
               </S.ListItemWrapper>
 
