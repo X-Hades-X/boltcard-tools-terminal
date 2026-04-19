@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import { faDeleteLeft } from "@fortawesome/free-solid-svg-icons";
 import * as S from "./styled";
 import { ComponentStack, Pressable } from "@components";
@@ -13,19 +13,21 @@ type NumPadProps = {
 const MAX_LENGTH = 9;
 
 export const NumPad = (props: NumPadProps) => {
-  const [value, setValue] = useState<string>(props.value);
-  const [maxFloating] = useState(props.fixed || 0);
+  // NumPad is fully controlled: derive from props so the parent can reset
+  // or change `fixed` (e.g. when switching SAT/BTC/fiat) and the component
+  // follows along.
+  const { value, fixed = 0, onNumberEntered } = props;
 
   const onButtonPress = useCallback((buttonPressed: string) => {
     let newValue = value;
     if (buttonPressed === "bck") {
       newValue = value.slice(0, value.length - 1);
-      if(newValue === "0") {
+      if (newValue === "0") {
         newValue = "";
       }
     } else if (buttonPressed === ".") {
-      if (value.indexOf(".") < 0 && props.fixed) {
-        if(value.length === 0) {
+      if (value.indexOf(".") < 0 && fixed) {
+        if (value.length === 0) {
           newValue = "0";
         }
         newValue += buttonPressed;
@@ -34,17 +36,19 @@ export const NumPad = (props: NumPadProps) => {
       newValue = value + buttonPressed;
     }
 
-    setValue(newValue);
-    props.onNumberEntered(newValue);
-  }, [value, props]);
+    onNumberEntered(newValue);
+  }, [value, fixed, onNumberEntered]);
 
   const isNumButtonsDisabled = useCallback(() => {
     if (value.length === MAX_LENGTH) {
       return true;
-    } else {
-      return value.indexOf(".") >= 0 && maxFloating > 0 && maxFloating <= value.length - (value.indexOf(".") + 1);
     }
-  }, [value, maxFloating]);
+    return (
+      value.indexOf(".") >= 0 &&
+      fixed > 0 &&
+      fixed <= value.length - (value.indexOf(".") + 1)
+    );
+  }, [value, fixed]);
 
   return (
     <>
@@ -131,7 +135,7 @@ export const NumPad = (props: NumPadProps) => {
             disabled={value.length === 0 || isNumButtonsDisabled()}
             onPress={() => onButtonPress("0")}
           />
-          {props.fixed ?
+          {fixed ?
             <S.NumPadButtonStyle
               mode="normal"
               type="primary"

@@ -140,16 +140,23 @@ export const Wallet = () => {
     }
   }, [error, colors.primary, navigate, setBackgroundColor]);
 
+  // Clear the entered amount when the currency changes so the NumPad's
+  // decimal-precision limit (`fixed`) stays consistent with the input.
   useEffect(() => {
-    if (amount && (amount !== "" || amount.indexOf(".") === amount.length - 1)) {
-      const newNumAmount = parseFloat(amount);
-      setNumAmount(newNumAmount);
-      setSatAmount(Math.ceil(newNumAmount * currentRate.value));
-    } else if (!amount || amount === "") {
-      setNumAmount(0);
-      setSatAmount(0);
-    }
+    setAmount("");
+  }, [currentRate.label]);
 
+  useEffect(() => {
+    if (amount) {
+      const newNumAmount = parseFloat(amount);
+      if (!isNaN(newNumAmount)) {
+        setNumAmount(newNumAmount);
+        setSatAmount(Math.ceil(newNumAmount * currentRate.value));
+        return;
+      }
+    }
+    setNumAmount(0);
+    setSatAmount(0);
   }, [amount, currentRate]);
 
   return (
