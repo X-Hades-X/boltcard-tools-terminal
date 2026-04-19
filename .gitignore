@@ -65,6 +65,9 @@ local.properties
 *.keystore
 *.android.bundle
 android/app/src/main/res/merged
+# Local signing credentials sourced by scripts/sign-env.*
+android/signing.env
+android/signing.env.ps1
 
 
 # VS Code
