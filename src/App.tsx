@@ -1,9 +1,14 @@
 import { Routes, Route } from "@components/Router";
 import { StatusBar } from "@components";
 import { Home, QRScanner, Invoice, Wallet, Decoder } from "@screens";
-import { useBackHandler, useDeepLink, useSplashScreen } from "@hooks";
+import {
+  RatesProvider,
+  useBackHandler,
+  useDeepLink,
+  useSplashScreen
+} from "@hooks";
 
-const App = () => {
+const AppRoutes = () => {
   useDeepLink();
   useBackHandler();
   useSplashScreen();
@@ -25,5 +30,11 @@ const App = () => {
     </>
   );
 };
+
+const App = () => (
+  <RatesProvider>
+    <AppRoutes />
+  </RatesProvider>
+);
 
 export default App;

@@ -7,6 +7,6 @@ export { useBackHandler } from "./useBackHandler";
 export { useIsScreenSizeMin } from "./useIsScreenSizeMin";
 export { useIsCameraAvailable } from "./useIsCameraAvailable";
 export { useNfc } from "./useNfc";
-export { useRates } from "./useRates";
+export { useRates, RatesProvider } from "./useRates";
 export { useVersionTag } from "./useVersionTag";
 export { useInvoiceCallback } from "./useInvoiceCallback";
