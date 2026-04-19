@@ -25,14 +25,14 @@ export const BaseFieldContainer = styled(View)<{
       border-radius: ${theme.borderRadius}px;
   `}
   position: relative;
-  width: fit-content;
+  align-self: flex-start;
   flex-direction: row;
 `;
 
 export const ValueText = styled(Text)<{
   paddingTop?: number
 }>`
-  width: fit-content;
+  align-self: flex-start;
   padding-left: ${DEFAULT_LEFT + HORIZONTAL_PADDING}px;
   padding-right: ${DEFAULT_LEFT + HORIZONTAL_PADDING}px;
   font-family: Poppins-Medium;

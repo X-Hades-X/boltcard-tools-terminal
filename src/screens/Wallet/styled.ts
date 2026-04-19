@@ -26,14 +26,14 @@ export const SatAmountText = styled(Text)`
   text-align: center;
 `;
 
-export const SatAmountSpace = styled(Text)`
+export const SatAmountSpace = styled(View)`
     height: 22px;
 `;
 
 export const InfoText = styled(Text)`
   color: ${({ theme }) => theme.colors.white};
   text-align: left;
-  width: fit-content;
+  align-self: flex-start;
   margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
 `;
 
@@ -57,7 +57,7 @@ export const WalletErrorSpace = styled(View)`
 export const WalletErrorText = styled(Text)`
     color: ${({ theme }) => theme.colors.error};
     text-align: center;
-    width: fit-content;
+    align-self: center;
     margin: ${({ theme }) => `${theme.gridSize / 4}px ${theme.gridSize / 2}px`};
     height: 40px;
 `;
@@ -66,7 +66,7 @@ export const WalletValueWrapper = styled(View)`
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: end;
+    justify-content: flex-end;
     margin: 0 12px;
 `;
 
