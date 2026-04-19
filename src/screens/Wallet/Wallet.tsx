@@ -202,13 +202,15 @@ export const Wallet = () => {
                 <S.AmountText h1>
                   {getNumberWithSpacesFromString(amount, amount.indexOf(".") > 0)}
                 </S.AmountText>
-                <CurrencySelect onChange={event => {
-                  if(!isInit) {
-                    void updateCurrentRate(event);
-                  } else {
-                    setIsInit(false);
-                  }
-                }}/>
+                <S.WalletCurrencySlot>
+                  <CurrencySelect onChange={event => {
+                    if(!isInit) {
+                      void updateCurrentRate(event);
+                    } else {
+                      setIsInit(false);
+                    }
+                  }}/>
+                </S.WalletCurrencySlot>
               </S.WalletValueWrapper>
               {currentRate.label !== "SAT" ? (
                 <S.SatAmountText h4>

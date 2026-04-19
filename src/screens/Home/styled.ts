@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Text, Pressable, Image, ComponentStack } from "@components";
+import { Text, Pressable, Image, ComponentStack, View } from "@components";
 
 export const TitleLogo = styled(Image)`
   width: 42px;
@@ -35,8 +35,12 @@ export const MainComponentStack = styled(ComponentStack)`
 
 export const CurrencySelectComponentStack = styled(ComponentStack)`
   width: 300px;
-  display: flex;
+  align-items: center;
   justify-content: space-between;
+`;
+
+export const CurrencySelectSlot = styled(View)`
+  width: 90px;
 `;
 
 export const BuiltByComponentStack = styled(ComponentStack)`

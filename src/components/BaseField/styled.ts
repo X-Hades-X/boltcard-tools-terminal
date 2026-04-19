@@ -25,19 +25,20 @@ export const BaseFieldContainer = styled(View)<{
       border-radius: ${theme.borderRadius}px;
   `}
   position: relative;
-  align-self: flex-start;
+  width: 100%;
   flex-direction: row;
+  align-items: center;
 `;
 
-export const ValueText = styled(Text)<{
-  paddingTop?: number
-}>`
-  align-self: flex-start;
+export const ValueText = styled(Text)`
+  flex: 1;
   padding-left: ${DEFAULT_LEFT + HORIZONTAL_PADDING}px;
   padding-right: ${DEFAULT_LEFT + HORIZONTAL_PADDING}px;
   font-family: Poppins-Medium;
   background-color: transparent;
   font-size: 16px;
+  text-align: center;
+  text-align-vertical: center;
 `;
 
 export const BadgeContainer = styled(View)`

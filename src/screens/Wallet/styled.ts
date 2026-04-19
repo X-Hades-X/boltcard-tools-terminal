@@ -70,6 +70,10 @@ export const WalletValueWrapper = styled(View)`
     margin: 0 12px;
 `;
 
+export const WalletCurrencySlot = styled(View)`
+    width: 80px;
+`;
+
 export const WalletComponentStack = styled(ComponentStack)`
     margin-top: 42px;
     align-items: center;

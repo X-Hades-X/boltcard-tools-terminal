@@ -89,7 +89,9 @@ export const Home = () => {
           <S.IntroText h3 weight={600}>
             {t("defaultCurrencyLabel")}
           </S.IntroText>
-          <CurrencySelect/>
+          <S.CurrencySelectSlot>
+            <CurrencySelect/>
+          </S.CurrencySelectSlot>
         </S.CurrencySelectComponentStack>
         <ComponentStack gapSize={12}>
           <S.BuiltByComponentStack

@@ -98,7 +98,7 @@ export const BaseField = <T extends FieldProps>({
         />
       )}
       {typeof value === "string" && (
-        <S.ValueText centered={true} numberOfLines={2}>{value}</S.ValueText>
+        <S.ValueText numberOfLines={1}>{value}</S.ValueText>
       )}
       {left && (
         <S.BadgeContainer>
