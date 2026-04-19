@@ -6,6 +6,11 @@ import axios from "axios";
 import { isApiError } from "@utils";
 import { XOR } from "ts-essentials";
 
+// Network-side timeout (ms) for any LNURL / callback HTTP request. Without
+// this, a slow or unreachable LN server leaves the UI stuck on "Loading
+// wallet" indefinitely.
+const HTTP_TIMEOUT_MS = 15_000;
+
 export type LnurlWData =
   {
     tag: "withdrawRequest";
@@ -103,7 +108,10 @@ export const useInvoiceCallback = () => {
       }
 
       try {
-        const { data: cardDataResponse } = await axios.get<InvoiceResponse>(cardData);
+        const { data: cardDataResponse } = await axios.get<InvoiceResponse>(
+          cardData,
+          { timeout: HTTP_TIMEOUT_MS }
+        );
         if (cardDataResponse.tag === 'withdrawRequest') {
           return cardDataResponse;
         } else if (cardDataResponse.tag === 'payRequest') {
@@ -116,6 +124,11 @@ export const useInvoiceCallback = () => {
           const reason = e.response.data.reason;
           setError({
             reason: typeof reason === "string" ? reason : reason.detail,
+            status: "ERROR"
+          });
+        } else {
+          setError({
+            reason: t("errors.unknown"),
             status: "ERROR"
           });
         }
@@ -133,7 +146,8 @@ export const useInvoiceCallback = () => {
           k1,
           pr: lightningInvoice,
           pin
-        }
+        },
+        timeout: HTTP_TIMEOUT_MS
       });
 
       if (callbackResponseData.status === "ERROR") {
@@ -151,18 +165,23 @@ export const useInvoiceCallback = () => {
           reason: typeof reason === "string" ? reason : reason.detail,
           status: "ERROR"
         });
+      } else {
+        setError({
+          reason: t("errors.unknown"),
+          status: "ERROR"
+        });
       }
     }
-  }, []);
+  }, [t]);
 
   const requestInvoice = useCallback(async (lnurlp: LnurlPData, amount: number) => {
-    if(lnurlp.minSendable / 1000 > amount) {
+    if (lnurlp.minSendable / 1000 > amount) {
       setError({
         reason: "Amount is lower than min sendable. Can't make payRequest.",
         status: "ERROR"
       });
       return;
-    } else if(lnurlp.maxSendable / 1000 < amount) {
+    } else if (lnurlp.maxSendable / 1000 < amount) {
       setError({
         reason: "Amount is higher than max sendable. Can't make payRequest.",
         status: "ERROR"
@@ -170,16 +189,30 @@ export const useInvoiceCallback = () => {
       return;
     }
 
-    if (!error) {
+    try {
       const { data: payLinkResponseData } = await axios.get<{ pr: string }>(
-        lnurlp.callback, {
-          params: {
-            amount: amount * 1000
-          }
-        });
+        lnurlp.callback,
+        {
+          params: { amount: amount * 1000 },
+          timeout: HTTP_TIMEOUT_MS
+        }
+      );
       return payLinkResponseData.pr;
+    } catch (e) {
+      if (isApiError(e)) {
+        const reason = e.response.data.reason;
+        setError({
+          reason: typeof reason === "string" ? reason : reason.detail,
+          status: "ERROR"
+        });
+      } else {
+        setError({
+          reason: t("errors.unknown"),
+          status: "ERROR"
+        });
+      }
     }
-  }, [error]);
+  }, [t]);
 
   return { callLnurl, payInvoice, requestInvoice, isPaySuccess, error };
 };
