@@ -15,8 +15,18 @@ export const useInitialClipboard = () => {
   const appState = useRef(AppState.currentState);
 
   const checkClipboard = useCallback(async () => {
-    const clipboardData = await Clipboard.getString();
-    if (clipboardData.toLowerCase().indexOf("lnurl") >= 0 || clipboardData.indexOf("@") >= 0) {
+    const clipboardData = (await Clipboard.getString())?.trim() ?? "";
+
+    const lower = clipboardData.toLowerCase();
+    const isLnurl =
+      lower.startsWith("lnurl") ||
+      lower.startsWith("lnurlw://") ||
+      lower.startsWith("lnurlp://") ||
+      lower.startsWith("lightning:lnurl");
+    const isLnAddress =
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(clipboardData);
+
+    if (isLnurl || isLnAddress) {
       const toastId = toast.show(t("foundLnurlClipboard"), {
         type: "info",
         // @ts-ignore
@@ -24,9 +34,8 @@ export const useInitialClipboard = () => {
         duration: 10000,
         onPress: () => {
           toast.hide(toastId);
-          Clipboard.setString("");
           navigate(`/decoder`, {
-            state: {lightningRequest: clipboardData}
+            state: { lightningRequest: clipboardData }
           });
         }
       });

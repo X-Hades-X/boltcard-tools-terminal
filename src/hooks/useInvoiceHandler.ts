@@ -5,6 +5,27 @@ import { getBitcoinInvoiceData } from "@utils";
 import { useTranslation } from "react-i18next";
 import qs from "query-string";
 
+// Basic LN-address regex (RFC5321-ish local@host). Avoid matching arbitrary
+// strings that merely contain "@".
+const LN_ADDRESS_RE =
+  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+// Only treat a string as LNURL when it actually starts with one of the
+// well-known LNURL prefixes, not if the substring "lnurl" appears anywhere.
+const LNURL_PREFIXES = [
+  "lnurl",
+  "lnurlw://",
+  "lnurlp://",
+  "lightning:lnurl"
+];
+
+const isLnurl = (value: string) => {
+  const v = value.toLowerCase();
+  return LNURL_PREFIXES.some((p) => v.startsWith(p));
+};
+
+const isLnAddress = (value: string) => LN_ADDRESS_RE.test(value.trim());
+
 export const useInvoiceHandler = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -12,27 +33,31 @@ export const useInvoiceHandler = () => {
 
   const invoiceHandler = useCallback(
     (value: string) => {
-
-      // OpenCryptoPay (and probably others) provide QR codes that contain a URL with lightning param
-      // TODO OpenCryptoPay has an api call that provides the fiat value; could be supported in a later release
-      if(value.toLowerCase().startsWith("http")) {
-        const parsedValue = qs.parse(
-          value
-            .replace(/lightning:/i, "lightning=")
-            .replace(/bitcoin:/i, "bitcoin=")
-            .replace("?", "&"),
-          { parseNumbers: true }
-        ) as {lightning: string; bitcoin: string}
-        if(parsedValue.lightning) {
-          value = parsedValue.lightning
-        } else if(parsedValue.bitcoin) {
-          value = parsedValue.bitcoin
+      // OpenCryptoPay (and probably others) provide QR codes that contain a URL
+      // with a lightning/bitcoin query parameter. Parse the URL properly instead
+      // of hand-rolling string replacements.
+      // TODO OpenCryptoPay has an API call that provides the fiat value; could
+      // be supported in a later release.
+      if (value.toLowerCase().startsWith("http")) {
+        try {
+          const { query } = qs.parseUrl(value, { parseNumbers: false });
+          const { lightning, bitcoin } = query as {
+            lightning?: string;
+            bitcoin?: string;
+          };
+          if (lightning) {
+            value = lightning;
+          } else if (bitcoin) {
+            value = bitcoin;
+          }
+        } catch {
+          // fall through with the original value
         }
       }
 
-      if (value.toLowerCase().indexOf("lnurl") >= 0 || value.indexOf("@") >= 0) {
+      if (isLnurl(value) || isLnAddress(value)) {
         navigate(`/decoder`, {
-          state: {lightningRequest: value}
+          state: { lightningRequest: value }
         });
       } else {
         const {
@@ -45,9 +70,9 @@ export const useInvoiceHandler = () => {
         } = getBitcoinInvoiceData(value);
 
         if (isValid) {
-          if(bitcoinAddress && !amount) {
+          if (bitcoinAddress && !amount) {
             navigate(`/wallet`, {
-              state: {bitcoinAddress: bitcoinAddress}
+              state: { bitcoinAddress }
             });
           } else {
             navigate(`/invoice`, {
