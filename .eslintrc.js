@@ -25,7 +25,7 @@ module.exports = {
     "react/display-name": "off",
     "react-native/no-inline-styles": "off",
     "react/react-in-jsx-scope": "off",
-    "react-hooks/exhaustive-deps": ["warn"],
+    "react-hooks/exhaustive-deps": ["error"],
     radix: "off",
     "@typescript-eslint/no-unused-vars": [
       "warn",
