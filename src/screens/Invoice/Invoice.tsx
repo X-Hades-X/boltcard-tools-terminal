@@ -35,7 +35,7 @@ import * as S from "./styled";
 import { LnurlPData, LnurlWData } from "@hooks/useInvoiceCallback";
 import { getNumberWithSpaces } from "@utils/numberWithSpaces";
 import QRCode from "react-native-qrcode-svg";
-import { Clipboard } from "@utils";
+import { Clipboard, isApiError } from "@utils";
 import { useToast } from "react-native-toast-notifications";
 
 type InvoiceState = XOR<
@@ -260,29 +260,37 @@ export const Invoice = () => {
   }, [lightningInvoice, swapLightningInvoice, t, toast]);
 
   const onGetSwapQuote = useCallback(async () => {
-    // TODO this either broke somehow or doesn't work
-    if (amount) {
-      setIsSwapLoading(true);
-      try {
-        const { data } = await axios.get<{
-          callback: string;
-          minSendable: number;
-        }>(
-          `https://swiss-bitcoin-pay.ch/.well-known/lnurlp/${bitcoinAddress},amount=${amount},scheduled=${
-            isScheduledSwap ? "true" : "false"
-          }`
-        );
-        const { data: callbackData } = await axios.get<{
-          pr: string;
-        }>(data.callback, { params: { amount: data.minSendable } });
-        setSwapLightningInvoice(callbackData.pr);
-        setSwapFees(data.minSendable / 1000 - amount);
-      } catch (e) {
-        // TODO handle error
-      }
+    if (!amount) return;
+
+    setIsSwapLoading(true);
+    try {
+      const { data } = await axios.get<{
+        callback: string;
+        minSendable: number;
+      }>(
+        `https://swiss-bitcoin-pay.ch/.well-known/lnurlp/${bitcoinAddress},amount=${amount},scheduled=${
+          isScheduledSwap ? "true" : "false"
+        }`,
+        { timeout: 15_000 }
+      );
+      const { data: callbackData } = await axios.get<{
+        pr: string;
+      }>(data.callback, {
+        params: { amount: data.minSendable },
+        timeout: 15_000
+      });
+      setSwapLightningInvoice(callbackData.pr);
+      setSwapFees(data.minSendable / 1000 - amount);
+    } catch (e) {
+      const reason = isApiError(e) ? e.response.data.reason : undefined;
+      const text =
+        (typeof reason === "string" ? reason : reason?.detail) ||
+        t("errors.swapQuoteFailed");
+      toast.show(text, { type: "error" });
+    } finally {
       setIsSwapLoading(false);
     }
-  }, [amount, bitcoinAddress, isScheduledSwap]);
+  }, [amount, bitcoinAddress, isScheduledSwap, t, toast]);
 
   const finalLabel = useMemo(
     () =>

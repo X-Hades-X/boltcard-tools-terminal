@@ -66,7 +66,8 @@
       "returnToHome": "Return to Home",
       "copiedToClipboard": "Copied Invoice to Clipboard",
       "errors": {
-        "noAmountInvoice": "Lightning invoice has no amount"
+        "noAmountInvoice": "Lightning invoice has no amount",
+        "swapQuoteFailed": "Could not fetch a swap quote, please try again"
       }
     },
     "wallet": {
