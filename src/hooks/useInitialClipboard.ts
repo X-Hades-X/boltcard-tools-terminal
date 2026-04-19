@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Clipboard, getBitcoinInvoiceData } from "@utils";
+import {
+  Clipboard,
+  getBitcoinInvoiceData,
+  isLnurlOrAddress
+} from "@utils";
 import { useToast } from "react-native-toast-notifications";
 import { useTranslation } from "react-i18next";
 import { faFileInvoice } from "@fortawesome/free-solid-svg-icons";
@@ -17,16 +21,7 @@ export const useInitialClipboard = () => {
   const checkClipboard = useCallback(async () => {
     const clipboardData = (await Clipboard.getString())?.trim() ?? "";
 
-    const lower = clipboardData.toLowerCase();
-    const isLnurl =
-      lower.startsWith("lnurl") ||
-      lower.startsWith("lnurlw://") ||
-      lower.startsWith("lnurlp://") ||
-      lower.startsWith("lightning:lnurl");
-    const isLnAddress =
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(clipboardData);
-
-    if (isLnurl || isLnAddress) {
+    if (isLnurlOrAddress(clipboardData)) {
       const toastId = toast.show(t("foundLnurlClipboard"), {
         type: "info",
         // @ts-ignore

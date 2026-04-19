@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "react-native-toast-notifications";
 import { useTranslation } from "react-i18next";
-import { bech32 } from "bech32";
 import axios from "axios";
-import { isApiError } from "@utils";
+import { decodeLnurl, isApiError } from "@utils";
 import { XOR } from "ts-essentials";
 
 // Network-side timeout (ms) for any LNURL / callback HTTP request. Without
@@ -63,53 +62,15 @@ export const useInvoiceCallback = () => {
       setIsPaySuccess(false);
       setError(undefined);
 
-      if (lnurl.indexOf("@") >= 0) {
-        const splitLnAddress = lnurl.split("@");
-        lnurl = `lnurlp://${splitLnAddress[1]}/.well-known/lnurlp/${splitLnAddress[0]}`;
-      }
-
-      const lightingPrefix = "lightning:";
-      const lnurlwPrefix = "lnurlw://";
-      const lnurlpPrefix = "lnurlp://";
-      const lnurlEncodingPrefix = "lnurl";
-
-      if (
-        !lnurl.toLowerCase().startsWith(lnurlwPrefix) &&
-        !lnurl.toLowerCase().startsWith(lnurlpPrefix) &&
-        (lnurl.toLowerCase().startsWith(lightingPrefix) ||
-          lnurl.toLowerCase().startsWith(lnurlEncodingPrefix))
-      ) {
-        lnurl = lnurl.toLowerCase();
-      } else if (
-        !lnurl.startsWith(lnurlwPrefix) &&
-        !lnurl.startsWith(lnurlpPrefix)
-      ) {
+      const decoded = decodeLnurl(lnurl);
+      if (decoded.kind === "invalid") {
         setError({ status: "ERROR", reason: t("errors.invalidLightningTag") });
         return;
       }
 
-      if (lnurl.startsWith(lightingPrefix)) {
-        lnurl = lnurl.slice(lightingPrefix.length);
-      }
-
-      if (lnurl.startsWith(lnurlwPrefix)) {
-        lnurl = lnurl.replace("lnurlw", "https");
-      } else if (lnurl.startsWith(lnurlpPrefix)) {
-        lnurl = lnurl.replace("lnurlp", "https");
-      }
-
-      let cardData;
-      if (lnurl.startsWith(lnurlEncodingPrefix)) {
-        const { words: dataPart } = bech32.decode(lnurl, 2000);
-        const requestByteArray = bech32.fromWords(dataPart);
-        cardData = Buffer.from(requestByteArray).toString();
-      } else {
-        cardData = lnurl;
-      }
-
       try {
         const { data: cardDataResponse } = await axios.get<InvoiceResponse>(
-          cardData,
+          decoded.url,
           { timeout: HTTP_TIMEOUT_MS }
         );
         if (cardDataResponse.tag === 'withdrawRequest') {

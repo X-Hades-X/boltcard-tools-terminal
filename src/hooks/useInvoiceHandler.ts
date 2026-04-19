@@ -1,30 +1,9 @@
 import { useCallback } from "react";
 import { useNavigate } from "@components/Router";
 import { useToast } from "react-native-toast-notifications";
-import { getBitcoinInvoiceData } from "@utils";
+import { getBitcoinInvoiceData, isLnurlOrAddress } from "@utils";
 import { useTranslation } from "react-i18next";
 import qs from "query-string";
-
-// Basic LN-address regex (RFC5321-ish local@host). Avoid matching arbitrary
-// strings that merely contain "@".
-const LN_ADDRESS_RE =
-  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-
-// Only treat a string as LNURL when it actually starts with one of the
-// well-known LNURL prefixes, not if the substring "lnurl" appears anywhere.
-const LNURL_PREFIXES = [
-  "lnurl",
-  "lnurlw://",
-  "lnurlp://",
-  "lightning:lnurl"
-];
-
-const isLnurl = (value: string) => {
-  const v = value.toLowerCase();
-  return LNURL_PREFIXES.some((p) => v.startsWith(p));
-};
-
-const isLnAddress = (value: string) => LN_ADDRESS_RE.test(value.trim());
 
 export const useInvoiceHandler = () => {
   const navigate = useNavigate();
@@ -55,7 +34,7 @@ export const useInvoiceHandler = () => {
         }
       }
 
-      if (isLnurl(value) || isLnAddress(value)) {
+      if (isLnurlOrAddress(value)) {
         navigate(`/decoder`, {
           state: { lightningRequest: value }
         });
