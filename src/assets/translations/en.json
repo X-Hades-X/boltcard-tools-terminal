@@ -36,7 +36,6 @@
       "builtBy": "Built by",
       "walletMode": "Scan Bolt Card",
       "foundInvoiceClipboard": "Tap to read invoice from your clipboard",
-      "foundLnAddrClipboard": "Tap to load LN Address from your clipboard",
       "foundLnurlClipboard": "Tap to load LNURL from your clipboard"
     },
     "invoice": {
@@ -61,7 +60,7 @@
       "scheduleForNextBatch": "Schedule for next batch",
       "startScanning": "Start scanning",
       "payingInvoice": "Paying invoice",
-      "topupCard": "Tap your Bold Card to receive",
+      "topupCard": "Tap your Bolt Card to receive",
       "paid": "Paid",
       "received": "Received",
       "returnToHome": "Return to Home",
