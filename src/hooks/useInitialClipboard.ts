@@ -57,7 +57,6 @@ export const useInitialClipboard = () => {
           duration: 10000,
           onPress: () => {
             toast.hide(toastId);
-            Clipboard.setString("");
             if(bitcoinAddress && !amount) {
               navigate(`/wallet`, {
                 state: { bitcoinAddress }
