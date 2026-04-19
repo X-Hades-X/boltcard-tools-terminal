@@ -60,16 +60,22 @@ export const Wallet = () => {
   useEffect(() => {
     if (withdraw && satAmount) {
       navigate(`/invoice`, {
-        state: currentRate.label !== "SAT" ?
-          {
-            withdrawInvoice: withdraw,
-            withdrawAmount: satAmount,
-            withdrawPin: pin
-          } :
-          { withdrawInvoice: withdraw, withdrawAmount: satAmount, withdrawPin: pin }
+        state: currentRate.label !== "SAT"
+          ? {
+              withdrawInvoice: withdraw,
+              withdrawAmount: satAmount,
+              withdrawPin: pin,
+              fiat: currentRate.label,
+              fiatAmount: numAmount
+            }
+          : {
+              withdrawInvoice: withdraw,
+              withdrawAmount: satAmount,
+              withdrawPin: pin
+            }
       });
     }
-  }, [withdraw, satAmount, numAmount, currentRate, pin]);
+  }, [withdraw, satAmount, numAmount, currentRate, pin, navigate]);
 
   const onLnurlW = useCallback(() => {
     if (lnurlw && satAmount) {
