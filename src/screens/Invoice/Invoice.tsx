@@ -129,12 +129,17 @@ export const Invoice = () => {
   // TODO handle ln invoice without satoshis (Phoenix Wallet); backend needs to be able to handle it too
   const { satoshis } = decodedInvoice || {};
 
+  const onReturnToHome = useCallback(() => {
+    navigate("/");
+    setBackgroundColor(colors.primary, 0);
+  }, [colors.primary, navigate, setBackgroundColor]);
+
   useEffect(() => {
     if (decodedInvoice && !satoshis) {
       toast.show(t("errors.noAmountInvoice"), { type: "error" });
       onReturnToHome();
     }
-  }, [decodedInvoice, satoshis]);
+  }, [decodedInvoice, satoshis, onReturnToHome, t, toast]);
 
   useEffect(() => {
     void setupNfc();
@@ -278,11 +283,6 @@ export const Invoice = () => {
       setIsSwapLoading(false);
     }
   }, [amount, bitcoinAddress, isScheduledSwap]);
-
-  const onReturnToHome = useCallback(() => {
-    navigate("/");
-    setBackgroundColor(colors.primary, 0);
-  }, [colors.primary, navigate, setBackgroundColor]);
 
   const finalLabel = useMemo(
     () =>
